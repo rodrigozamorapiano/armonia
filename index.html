@@ -1,0 +1,876 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Compás Armonía</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>:root{--bg:#07122B;--s1:#0E1F45;--s2:#0A1A3C;--line:#243F7A;--ink:#EEF3FF;--mut:#9DB1D9;--staff:#DDE7FB;--acc:#5B9BFF;--ok:#5FD39A;--bad:#FF9A85;--disp:'Cormorant Garamond',Georgia,'Times New Roman',serif;--body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:dark}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font:400 16px/1.62 var(--body);padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+#app{max-width:860px;margin:0 auto;padding-block:20px 56px}
+h1,h2,h3{font-family:var(--disp);color:#fff;font-weight:600;margin:0;text-wrap:balance;line-height:1.12}
+h1{font-size:clamp(2.2rem,7vw,3.3rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,4.6vw,2.15rem)}
+h3{font-size:1.3rem}
+p{margin:0 0 .85rem}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);font-weight:600;margin:0 0 .5rem}
+.mut{color:var(--mut)}
+.btn{font:600 15px/1 var(--body);background:#fff;color:#0B1B44;border:0;border-radius:10px;padding:.8rem 1.3rem;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#E4ECFF}
+.btn:disabled{opacity:.32;cursor:default}
+.btn.ghost{background:transparent;color:#fff;border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--s1)}
+.btn.sm{padding:.55rem .95rem;font-size:14px}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:clamp(16px,3.5vw,28px)}
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+.brand{font-family:var(--disp);font-size:1.5rem;color:#fff;font-weight:600}
+.brand span{color:var(--acc)}
+/* home */
+.hero{padding:10px 0 26px}
+.hero p{max-width:60ch;color:var(--mut);font-size:1.05rem}
+.cont{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.bar{height:6px;background:var(--s2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s}
+.blk{margin-top:30px}
+.blk h3{margin-bottom:10px}
+.tl{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.tp{display:flex;gap:12px;align-items:center;text-align:left;background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;color:var(--ink);font:500 15px/1.3 var(--body);min-width:0}
+.tp .n{font-family:var(--disp);font-size:1.35rem;color:var(--acc);min-width:1.7em;font-weight:600}
+.tp small{display:block;color:var(--mut);font-weight:400;font-size:12px;margin-top:2px}
+.tp.on{background:var(--s1);border-color:var(--acc);cursor:pointer}
+.tp.on:hover{background:#12285A}
+.tp.off{opacity:.55}
+.etapas{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin:14px 0 0;padding:0;list-style:none;counter-reset:e}
+.etapas li{counter-increment:e;font-size:14px;color:var(--mut);display:flex;gap:8px}
+.etapas li:before{content:counter(e);color:var(--acc);font-weight:700}
+/* lesson */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;margin:0 0 6px;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--s2);color:var(--mut);border-radius:99px;padding:6px 12px;font:600 12px/1 var(--body);cursor:pointer;white-space:nowrap}
+.chip.cur{background:#fff;color:#0B1B44;border-color:#fff}
+.chip.dn{color:var(--ink);border-color:var(--acc)}
+.chip:disabled{opacity:.35;cursor:default}
+.stephead{margin:20px 0 14px}
+.foot{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+.lbl{font-size:13px;color:var(--mut)}
+.def{border-left:3px solid var(--acc);background:var(--s2);padding:12px 16px;border-radius:0 10px 10px 0;margin:0 0 1rem}
+.def b{color:#fff}
+.q{margin:0 0 20px}
+.q .qt{font-weight:600;color:#fff;margin-bottom:.6rem}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:500 15px/1.3 var(--body);color:var(--ink);background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:.65rem 1rem;cursor:pointer;text-align:left}
+.opt:hover{border-color:var(--acc)}
+.opt.ok{border-color:var(--ok);background:rgba(95,211,154,.13);color:#fff}
+.opt.bad{border-color:var(--bad);background:rgba(255,154,133,.12);color:var(--bad)}
+.opt:disabled{cursor:default}
+.fb{margin-top:.6rem;font-size:14.5px;color:var(--mut)}
+.fb.ok{color:var(--ok)}
+.fb.bad{color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.tbl{width:100%;border-collapse:collapse;font-size:14.5px}
+.tbl th,.tbl td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.tbl th{color:#fff;font-weight:600}
+.scroll{overflow-x:auto}
+.svgbox{background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:10px;margin:10px 0}
+.svgbox svg{display:block;margin:0 auto;width:100%;height:auto}
+.nt{color:var(--staff)}
+.nt.hl{color:var(--acc)}
+.nt.ok{color:var(--ok)}
+.nt.bad{color:var(--bad)}
+.hit{fill:transparent;cursor:pointer}
+.hit:hover{fill:rgba(91,155,255,.16)}
+.wk{fill:#F3F6FF;stroke:#1B2F63;stroke-width:1;cursor:pointer}
+.wk.hl{fill:#9CC3FF}.wk.ok{fill:#8DE3B8}.wk.bad{fill:#FFB5A5}.wk.tn{fill:#5B9BFF}
+.bk{fill:#0B1636;stroke:#000;cursor:pointer}
+.bk.hl{fill:#3F78D6}.bk.ok{fill:#2E9D6E}.bk.bad{fill:#C4604E}.bk.tn{fill:#5B9BFF}
+.kl{font:600 9px var(--body);fill:#33466F;pointer-events:none}
+.sec{fill:var(--s1);stroke:var(--bg);stroke-width:2;cursor:pointer}
+.sec.m{fill:#10265A}
+.sec:hover{fill:#1B3A82}
+.sec.sel{fill:#5B9BFF}
+.sec.ok{fill:#2E9D6E}.sec.bad{fill:#C4604E}
+.wt{font:600 15px var(--body);fill:#fff;pointer-events:none}
+.wt.sm{font-size:12px}
+.wt.sg{font-size:11px;fill:var(--mut)}
+.sec.sel+.wt{fill:#07122B}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-size:13px;color:var(--mut);background:var(--s2)}
+.info{background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;min-height:4.4em}
+.grid7{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin:10px 0}
+.gc{background:var(--s2);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px;text-align:left;cursor:pointer;font:500 14px/1.3 var(--body)}
+.gc b{display:block;font-family:var(--disp);font-size:1.4rem;color:#fff}
+.gc.seen{border-color:var(--acc)}
+.mrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.mrow .ml{min-width:7.5em;font-weight:600;color:#fff}
+.mrow .opt{padding:.45rem .8rem;font-size:14px}
+.fin{text-align:center;padding:22px 0}
+.fin .big{font-family:var(--disp);font-size:3.4rem;color:#fff;line-height:1}
+@media(max-width:520px){.btn{padding:.8rem 1rem}.foot .btn{flex:1}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+[hidden]{display:none!important}
+</style></head><body><div id="app"></div><script>(function(){
+'use strict';
+var CLEF='M441 -245c-23 -4 -48 -6 -76 -6c-59 0 -102 7 -130 20c-88 42 -150 93 -187 154c-26 44 -43 103 -48 176c0 6 -1 13 -1 19c0 54 15 111 45 170c29 57 65 106 110 148s96 85 153 127c-3 16 -8 46 -13 92c-4 43 -5 73 -5 89c0 117 16 172 69 257c34 54 64 82 89 82 c21 0 43 -30 69 -92s39 -115 41 -159v-15c0 -109 -21 -162 -67 -241c-13 -20 -63 -90 -98 -118c-13 -9 -25 -19 -37 -29l31 -181c8 1 18 2 28 2c58 0 102 -12 133 -35c59 -43 92 -104 98 -184c1 -7 1 -15 1 -22c0 -123 -87 -209 -181 -248c8 -57 17 -110 25 -162 c5 -31 6 -58 6 -80c0 -30 -5 -53 -14 -70c-35 -64 -88 -99 -158 -103c-5 0 -11 -1 -16 -1c-37 0 -72 10 -108 27c-50 24 -77 59 -80 105v11c0 29 7 55 20 76c18 28 45 42 79 44h6c49 0 93 -42 97 -87v-9c0 -51 -34 -86 -105 -106c17 -24 51 -36 102 -36c62 0 116 43 140 85 c9 16 13 41 13 74c0 20 -1 42 -5 67c-8 53 -18 106 -26 159zM461 939c-95 0 -135 -175 -135 -286c0 -24 2 -48 5 -71c50 39 92 82 127 128c40 53 60 100 60 140v8c-4 53 -22 81 -55 81h-2zM406 119l54 -326c73 25 110 78 110 161c0 7 0 15 -1 23c-7 95 -57 142 -151 142h-12 zM382 117c-72 -2 -128 -47 -128 -120v-7c2 -46 43 -99 75 -115c-3 -2 -7 -5 -10 -10c-70 33 -116 88 -123 172v11c0 68 44 126 88 159c23 17 49 29 78 36l-29 170c-21 -13 -52 -37 -92 -73c-50 -44 -86 -84 -109 -119c-45 -69 -67 -130 -67 -182v-13c5 -68 35 -127 93 -176 s125 -73 203 -73c25 0 50 3 75 9c-19 111 -36 221 -54 331z';
+var LET=['C','D','E','F','G','A','B'],NM={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'},PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function $(s,r){return (r||document).querySelector(s);}
+function el(h){var d=document.createElement('div');d.innerHTML=h.trim();return d.firstElementChild;}
+function accS(a){return a>0?'♯'.repeat(a):a<0?'♭'.repeat(-a):'';}
+function nmA(l,a){return NM[l]+accS(a);}
+/* ---------- teoría ---------- */
+function tonicOf(f){var p=f+1;return {l:'FCGDAEB'[((p%7)+7)%7],a:Math.floor(p/7)};}
+function keyTonic(f,m){return tonicOf(m==='m'?f+3:f);}
+function keyName(f,m){var t=keyTonic(f,m);return nmA(t.l,t.a)+(m==='m'?' menor':' mayor');}
+var SHL='FCGDAEB',FLL='BEADGCF';
+function sigAlt(f,l){if(f>0&&SHL.indexOf(l)<f)return 1;if(f<0&&FLL.indexOf(l)<-f)return -1;return 0;}
+function sigNames(f){var s=f>0?SHL:FLL,o=[];for(var i=0;i<Math.abs(f);i++)o.push(NM[s[i]]+(f>0?'♯':'♭'));return o;}
+function sigText(f){return f===0?'sin alteraciones':Math.abs(f)+(f>0?' sostenido':' bemol')+(Math.abs(f)>1?'s':'')+' ('+sigNames(f).join(', ')+')';}
+var PB={M:[0,2,4,5,7,9,11],m:[0,2,3,5,7,8,10],h:[0,2,3,5,7,8,11]};
+function midOf(n){return PC[n.l]+n.a+12*(n.o+1);}
+function stpOf(n){return n.o*7+LET.indexOf(n.l)-30;}
+function scaleN(t,mode,o,count){count=count||8;var i0=LET.indexOf(t.l),b=PC[t.l]+t.a+12*(o+1),out=[];
+ for(var k=0;k<count;k++){var j=i0+k,li=j%7,oo=o+Math.floor(j/7),pat=PB[mode][k%7]+12*Math.floor(k/7);
+  out.push({l:LET[li],a:b+pat-(PC[LET[li]]+12*(oo+1)),o:oo});}
+ return out;}
+function triad(f,mode,deg,o){var t=keyTonic(f,mode),sc=scaleN(t,mode==='m'?'h':'M',o,15);return [sc[deg-1],sc[deg+1],sc[deg+3]].map(midOf);}
+function stepNote(s,a){var v=s+30;return {l:LET[((v%7)+7)%7],o:Math.floor(v/7),a:a};}
+function letterOfStep(s){return LET[(((s+30)%7)+7)%7];}
+/* ---------- audio ---------- */
+var AC=null;
+function ac(){try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C();}if(AC&&AC.state==='suspended')AC.resume();}catch(e){}return AC;}
+function tone(m,t,d,v){var c=ac();if(!c)return;var f=440*Math.pow(2,(m-69)/12);
+ var out=c.createGain(),lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=Math.min(7000,f*6+600);
+ out.connect(lp);lp.connect(c.destination);
+ out.gain.setValueAtTime(0.0001,t);out.gain.linearRampToValueAtTime(v,t+0.008);out.gain.exponentialRampToValueAtTime(v*0.35,t+0.25);out.gain.exponentialRampToValueAtTime(0.0003,t+d+0.5);
+ [1,.5,.28,.15,.08,.04].forEach(function(h,k){var o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f*(k+1)*(1+(k?0.0004*k:0));
+  g.gain.setValueAtTime(h,t);g.gain.exponentialRampToValueAtTime(0.001,t+Math.max(.3,d*(1-k*.1)));o.connect(g);g.connect(out);o.start(t);o.stop(t+d+0.6);});}
+function now(){var c=ac();return c?c.currentTime+0.04:0;}
+function play(m,d){tone(m,now(),d||1.6,.26);}
+function seq(ms,dt,cb){var t=now();ms.forEach(function(m,i){tone(m,t+i*dt,dt*1.5,.24);if(cb)setTimeout(function(){cb(i);},i*dt*1000);});}
+function chord(ms,d,delay,cb){var t=now()+(delay||0);ms.forEach(function(m,i){tone(m,t+i*0.012,d||1.4,.17);});}
+function chords(list,dt,cb){list.forEach(function(ms,i){setTimeout(function(){chord(ms,dt*1.4);if(cb)cb(i);},i*dt*1000);});}
+/* ---------- pentagrama ---------- */
+var COL='currentColor';
+function Y(s){return 24+(12-s)*8;}
+function sharpG(x,y){return '<g stroke="'+COL+'" fill="none"><line x1="'+(x-2.2)+'" y1="'+(y-9)+'" x2="'+(x-2.2)+'" y2="'+(y+10)+'" stroke-width="1.3"/><line x1="'+(x+2.4)+'" y1="'+(y-10)+'" x2="'+(x+2.4)+'" y2="'+(y+9)+'" stroke-width="1.3"/><path d="M'+(x-5.5)+' '+(y-1.6)+'L'+(x+5.5)+' '+(y-4.2)+'M'+(x-5.5)+' '+(y+4.4)+'L'+(x+5.5)+' '+(y+1.8)+'" stroke-width="2.6"/></g>';}
+function flatG(x,y){return '<g stroke="'+COL+'" fill="none"><line x1="'+(x-3)+'" y1="'+(y-14)+'" x2="'+(x-3)+'" y2="'+(y+4.5)+'" stroke-width="1.4"/><path d="M'+(x-3)+' '+(y+4.5)+'C'+(x+7)+' '+(y+0)+' '+(x+6.5)+' '+(y-8.5)+' '+(x-3)+' '+(y-4)+'" stroke-width="1.7"/></g>';}
+function natG(x,y){return '<g stroke="'+COL+'" fill="none"><line x1="'+(x-2.4)+'" y1="'+(y-10)+'" x2="'+(x-2.4)+'" y2="'+(y+5)+'" stroke-width="1.3"/><line x1="'+(x+2.4)+'" y1="'+(y-5)+'" x2="'+(x+2.4)+'" y2="'+(y+10)+'" stroke-width="1.3"/><path d="M'+(x-2.4)+' '+(y-3)+'L'+(x+2.4)+' '+(y-5)+'M'+(x-2.4)+' '+(y+5)+'L'+(x+2.4)+' '+(y+3)+'" stroke-width="2.2"/></g>';}
+function accG(a,x,y){return a>0?sharpG(x,y):a<0?flatG(x,y):natG(x,y);}
+/* o: {sig, notes:[{s,a,cls,lab,open,sh}], gap, hit, bar, w, labels} */
+function staff(o){
+ var f=o.sig||0,ns=o.notes||[],nsig=Math.abs(f),cols=o.hit||ns.length||1,gap=o.gap||(o.hit?46:44);
+ var x0=52+nsig*11+(nsig?12:4)+22,W=o.w||Math.max(300,x0+cols*gap+16),s='';
+ s+='<svg viewBox="0 0 '+W+' 184" role="img" aria-label="'+(o.aria||'Pentagrama en clave de sol')+'" style="max-width:'+Math.round(W*1.45)+'px"><g class="nt" stroke="'+COL+'" fill="none">';
+ [0,2,4,6,8].forEach(function(k){s+='<line x1="6" x2="'+(W-6)+'" y1="'+Y(k)+'" y2="'+Y(k)+'" stroke-width="1.1" opacity=".85"/>';});
+ s+='<line x1="6" x2="6" y1="'+Y(8)+'" y2="'+Y(0)+'" stroke-width="1.4"/>';
+ if(o.bar)s+='<line x1="'+(W-8)+'" x2="'+(W-8)+'" y1="'+Y(8)+'" y2="'+Y(0)+'" stroke-width="2.4"/>';
+ s+='<path d="'+CLEF+'" transform="translate(12,'+Y(2)+') scale(.064,-.064)" fill="'+COL+'" stroke="none"/>';
+ var pos=f>0?[8,5,9,6,3,7,4]:[4,7,3,6,2,5,1];
+ for(var i=0;i<nsig;i++)s+=(f>0?sharpG:flatG)(52+i*11+5,Y(pos[i]));
+ s+='</g>';
+ if(o.hit){for(var c=0;c<cols;c++){var cx=x0+c*gap;
+   if(!ns.filter(function(n){return n.c===c;}).length)s+='<circle class="nt" cx="'+cx+'" cy="'+Y(4)+'" r="4" fill="none" stroke="'+COL+'" stroke-dasharray="2 3" opacity=".4"/>';
+   for(var st=-3;st<=13;st++)s+='<rect class="hit" data-c="'+c+'" data-s="'+st+'" x="'+(cx-gap/2)+'" y="'+(Y(st)-4)+'" width="'+gap+'" height="8"/>';}}
+ ns.forEach(function(n,i){
+  var cx=x0+(n.c!=null?n.c:i)*gap,cy=Y(n.s),alt=sigAlt(f,letterOfStep(n.s)),a=n.a===undefined?alt:n.a,show=n.sh===undefined?(a!==alt):n.sh;
+  s+='<g class="nt '+(n.cls||'')+'">';
+  for(var k=-2;k>=n.s;k-=2)s+='<line x1="'+(cx-11)+'" x2="'+(cx+11)+'" y1="'+Y(k)+'" y2="'+Y(k)+'" stroke="'+COL+'" stroke-width="1.2"/>';
+  for(k=10;k<=n.s;k+=2)s+='<line x1="'+(cx-11)+'" x2="'+(cx+11)+'" y1="'+Y(k)+'" y2="'+Y(k)+'" stroke="'+COL+'" stroke-width="1.2"/>';
+  if(show)s+=accG(n.sh===true?(a===0?0:a):a,cx-15,cy);
+  s+=n.open?'<ellipse cx="'+cx+'" cy="'+cy+'" rx="6.8" ry="4.8" transform="rotate(-18 '+cx+' '+cy+')" fill="none" stroke="'+COL+'" stroke-width="2"/>':'<ellipse cx="'+cx+'" cy="'+cy+'" rx="6.6" ry="4.7" transform="rotate(-18 '+cx+' '+cy+')" fill="'+COL+'"/>';
+  if(n.stem)s+=n.s<4?'<line x1="'+(cx+6.1)+'" y1="'+(cy-1)+'" x2="'+(cx+6.1)+'" y2="'+(cy-30)+'" stroke="'+COL+'" stroke-width="1.4"/>':'<line x1="'+(cx-6.1)+'" y1="'+(cy+1)+'" x2="'+(cx-6.1)+'" y2="'+(cy+30)+'" stroke="'+COL+'" stroke-width="1.4"/>';
+  s+='</g>';
+  if(n.lab)s+='<text x="'+cx+'" y="152" text-anchor="middle" font-size="12" font-weight="600" fill="#9DB1D9" font-family="DM Sans,system-ui,sans-serif">'+n.lab+'</text>';
+ });
+ return s+'</svg>';}
+/* escala -> notas de pentagrama */
+function scaleStaff(f,mode,opts){var t=keyTonic(f,mode==='M'?'M':'m'),sc=scaleN(t,mode,4,8);opts=opts||{};
+ return staff({sig:opts.nosig?0:f,notes:sc.map(function(n,i){return {s:stpOf(n),a:n.a,open:true,lab:opts.lab?opts.lab[i]:(i+1)+'',cls:opts.cls&&opts.cls[i]};}),bar:true});}
+/* ---------- teclado ---------- */
+var WH=[0,2,4,5,7,9,11];
+function kb(o){var lo=o.lo,hi=o.hi,W=28,ws=[],idx={},mk=o.mk||{};
+ for(var m=lo;m<=hi;m++)if(WH.indexOf(m%12)>=0){idx[m]=ws.length;ws.push(m);}
+ var w=ws.length*W,s='<svg viewBox="0 0 '+w+' 124" role="img" aria-label="Teclado de piano" style="max-width:'+Math.min(w*1.6,820)+'px">';
+ ws.forEach(function(m,i){s+='<rect class="wk '+(mk[m]||'')+'" data-m="'+m+'" x="'+(i*W)+'" y="0" width="'+W+'" height="120" rx="3"/>';
+  if(o.lab!==false){var nm=NM[LET[WH.indexOf(m%12)]];s+='<text class="kl" x="'+(i*W+W/2)+'" y="113" text-anchor="middle">'+nm+(m%12===0?(Math.floor(m/12)-1):'')+'</text>';}});
+ for(m=lo;m<=hi;m++)if(WH.indexOf(m%12)<0&&idx[m-1]!==undefined){s+='<rect class="bk '+(mk[m]||'')+'" data-m="'+m+'" x="'+((idx[m-1]+1)*W-9)+'" y="0" width="18" height="74" rx="2"/>';}
+ return s+'</svg>';}
+/* ---------- círculo de quintas ---------- */
+var MJ=[['Do'],['Sol'],['Re'],['La'],['Mi'],['Si','Do♭'],['Fa♯','Sol♭'],['Re♭','Do♯'],['La♭'],['Mi♭'],['Si♭'],['Fa']];
+var MN=[['la'],['mi'],['si'],['fa♯'],['do♯'],['sol♯','la♭'],['re♯','mi♭'],['si♭','la♯'],['fa'],['do'],['sol'],['re']];
+var SGL=['0','1♯','2♯','3♯','4♯','5♯ · 7♭','6♯ · 6♭','5♭ · 7♯','4♭','3♭','2♭','1♭'];
+function fOf(i){return i<=4?[i]:i===5?[5,-7]:i===6?[6,-6]:i===7?[-5,7]:[i-12];}
+function pol(r,a){var t=(a-90)*Math.PI/180;return [200+r*Math.cos(t),200+r*Math.sin(t)];}
+function ring(i,r1,r2){var a0=i*30-15,a1=i*30+15,p=[pol(r2,a0),pol(r2,a1),pol(r1,a1),pol(r1,a0)];
+ return 'M'+p[0]+'A'+r2+' '+r2+' 0 0 1 '+p[1]+'L'+p[2]+'A'+r1+' '+r1+' 0 0 0 '+p[3]+'Z';}
+function wheel(o){o=o||{};var s='<svg viewBox="0 0 400 400" role="img" aria-label="Círculo de quintas" style="max-width:440px">';
+ for(var i=0;i<12;i++){
+  s+='<path class="sec m'+(o.sel&&o.sel.r==='M'&&o.sel.i===i?' sel':'')+'" data-i="'+i+'" data-r="M" d="'+ring(i,118,170)+'"/>';
+  var p=pol(144,i*30),L=MJ[i];
+  s+='<text class="wt" text-anchor="middle" x="'+p[0]+'" y="'+(p[1]+(L.length>1?-2:5))+'">'+L[0]+(L[1]?'<tspan class="sm" x="'+p[0]+'" dy="15" font-size="12">'+L[1]+'</tspan>':'')+'</text>';
+  s+='<path class="sec'+(o.sel&&o.sel.r==='m'&&o.sel.i===i?' sel':'')+'" data-i="'+i+'" data-r="m" d="'+ring(i,76,116)+'"/>';
+  p=pol(96,i*30);L=MN[i].slice(0,i===7?1:2);
+  s+='<text class="wt sm" text-anchor="middle" x="'+p[0]+'" y="'+(p[1]+(L.length>1?-1:4))+'">'+L[0]+(L[1]?'<tspan x="'+p[0]+'" dy="13">'+L[1]+'</tspan>':'')+'</text>';
+  p=pol(187,i*30);s+='<text class="wt sg" text-anchor="middle" x="'+p[0]+'" y="'+(p[1]+4)+'">'+SGL[i]+'</text>';}
+ s+='<circle cx="200" cy="200" r="72" fill="#0A1A3C" stroke="#243F7A"/><text class="wt sm" x="200" y="196" text-anchor="middle" fill="#9DB1D9">Círculo</text><text class="wt sm" x="200" y="212" text-anchor="middle" fill="#9DB1D9">de quintas</text></svg>';
+ return s;}
+window.AH={LET:LET,NM:NM,PC:PC,$:$,el:el,accS:accS,nmA:nmA,tonicOf:tonicOf,keyTonic:keyTonic,keyName:keyName,sigAlt:sigAlt,sigNames:sigNames,sigText:sigText,midOf:midOf,stpOf:stpOf,scaleN:scaleN,triad:triad,stepNote:stepNote,letterOfStep:letterOfStep,tone:tone,play:play,seq:seq,chord:chord,chords:chords,ac:ac,staff:staff,scaleStaff:scaleStaff,kb:kb,wheel:wheel,fOf:fOf,MJ:MJ,MN:MN,SGL:SGL};
+})();
+
+(function(){
+'use strict';
+var A=window.AH,el=A.el;
+var STAGES=['Definición y fundamentos teóricos','Clasificación y características','Construcción y procedimientos','Reglas y excepciones','Ejemplos musicales','Análisis de obras','Ejercicios de escritura y composición','Aplicaciones prácticas'];
+var SHORT=['Definición','Clasificación','Construcción','Reglas','Ejemplos','Análisis','Escritura','Aplicaciones'];
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function mapMid(sig,notes){return notes.map(function(n){var a=n.a===undefined?A.sigAlt(sig,A.letterOfStep(n.s)):n.a;return A.midOf(A.stepNote(n.s,a));});}
+/* ---------- componentes ---------- */
+function playAu(a){if(a.mode==='chord')A.chord(a.m,1.8);else if(a.mode==='chords')A.chords(a.m,a.dt||900);else A.seq(a.m,a.dt||0.42);}
+function quiz(box,api,qs){var left=qs.length;
+ qs.forEach(function(d){
+  var w=el('<div class="q">'+(d.pre?'<div class="svgbox">'+d.pre+'</div>':'')+'<p class="qt">'+d.q+'</p>'+(d.audio?'<div class="row">'+d.audio.map(function(a,i){return '<button class="btn ghost sm" data-au="'+i+'">▶ '+a.l+'</button>';}).join('')+'</div>':'')+'<div class="opts">'+d.opts.map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o+'</button>';}).join('')+'</div><div class="fb" hidden></div></div>');
+  var fb=w.querySelector('.fb'),solved=false,missed=false;
+  w.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+   if(b.dataset.au!==undefined){playAu(d.audio[+b.dataset.au]);return;}
+   if(b.dataset.i===undefined||solved)return;
+   fb.hidden=false;
+   if(+b.dataset.i===d.ans){solved=true;b.classList.add('ok');fb.className='fb ok';fb.innerHTML='Correcto. '+(d.why||'');api.score(!missed);if(--left===0)api.done();}
+   else{missed=true;b.classList.add('bad');b.disabled=true;fb.className='fb bad';fb.textContent='Todavía no. Prueba con otra opción.';}
+  });
+  box.appendChild(w);});}
+function match(box,api,o){var left=o.rows.length,w=el('<div>'+(o.pre?'<div class="svgbox">'+o.pre+'</div>':'')+(o.head?'<p class="qt" style="font-weight:600;color:#fff">'+o.head+'</p>':'')+'</div>');
+ o.rows.forEach(function(r){
+  var row=el('<div class="mrow"><span class="ml">'+r.l+'</span><span class="row" style="margin:0">'+o.cats.map(function(c,i){return '<button class="opt" data-i="'+i+'">'+c+'</button>';}).join('')+'</span></div>'),missed=false,solved=false;
+  row.addEventListener('click',function(e){var b=e.target.closest('button');if(!b||solved)return;
+   if(+b.dataset.i===r.ans){solved=true;b.classList.add('ok');[].forEach.call(row.querySelectorAll('button'),function(x){x.disabled=true;});api.score(!missed);if(--left===0)api.done();}
+   else{missed=true;b.classList.add('bad');b.disabled=true;}});
+  w.appendChild(row);});
+ box.appendChild(w);}
+function mkKb(host,lo,hi,onKey,lab){var mk={},box=el('<div class="svgbox"></div>');host.appendChild(box);
+ function draw(){box.innerHTML=A.kb({lo:lo,hi:hi,mk:mk,lab:lab});}
+ box.addEventListener('click',function(e){var k=e.target.closest('[data-m]');if(k&&onKey)onKey(+k.dataset.m,mk,draw);});
+ draw();return {mk:mk,draw:draw,box:box,flash:function(m,c){mk[m]=c||'hl';draw();setTimeout(function(){delete mk[m];draw();},380);}};}
+function pcs(f,sc,tm){return A.scaleN(A.keyTonic(f,tm),sc,4,7).map(function(n){return A.midOf(n)%12;});}
+function head(b,h){b.insertAdjacentHTML('beforeend',h);}
+/* constructor de escalas en el teclado */
+function kbBuild(box,api,rounds){var r=0,K;
+ var ui=el('<div></div>');box.appendChild(ui);
+ function round(){ui.innerHTML='';var d=rounds[r];
+  ui.appendChild(el('<p class="qt" style="font-weight:600;color:#fff">'+(r+1)+' de '+rounds.length+' · Marca las '+(d.n||7)+' notas de <b>'+d.txt+'</b> (en cualquier octava).</p>'));
+  K=mkKb(ui,60,84,function(m,mk,draw){A.play(m,1);if(mk[m])delete mk[m];else mk[m]='hl';draw();fb.hidden=true;});
+  var row=el('<div class="row"><button class="btn sm" id="chk">Comprobar</button><button class="btn ghost sm" id="clr">Borrar</button><button class="btn ghost sm" id="lis">▶ Escuchar mi escala</button></div>'),fb=el('<div class="fb" hidden></div>');
+  ui.appendChild(row);ui.appendChild(fb);
+  row.querySelector('#clr').onclick=function(){Object.keys(K.mk).forEach(function(k){delete K.mk[k];});K.draw();fb.hidden=true;};
+  row.querySelector('#lis').onclick=function(){var ms=Object.keys(K.mk).map(Number).sort(function(a,b){return a-b;});if(ms.length)A.seq(ms,.4);};
+  row.querySelector('#chk').onclick=function(){var want=d.pcs||pcs(d.f,d.sc,d.tm),got={};Object.keys(K.mk).forEach(function(k){got[k%12]=1;});
+   var miss=want.filter(function(p){return !got[p];}).length,extra=Object.keys(got).filter(function(p){return want.indexOf(+p)<0;}).length;
+   fb.hidden=false;
+   if(!miss&&!extra){fb.className='fb ok';fb.innerHTML='Correcto. '+d.why;api.score(!d.m);r++;if(r<rounds.length){var nx=el('<div class="row"><button class="btn sm">Siguiente escala</button></div>');nx.firstChild.onclick=round;ui.appendChild(nx);}else api.done();row.querySelector('#chk').disabled=true;}
+   else{d.m=true;fb.className='fb bad';fb.textContent=(miss?'Te faltan '+miss+' nota'+(miss>1?'s':'')+'. ':'')+(extra?'Sobra'+(extra>1?'n ':' ')+extra+' nota'+(extra>1?'s':'')+'. ':'')+'Revisa el patrón de tonos y semitonos.';}};
+ }
+ rounds.forEach(function(d){d.m=false;});round();}
+/* constructor de armaduras */
+function sigBuild(box,api,rounds){var r=0,f=0,ui=el('<div></div>');box.appendChild(ui);
+ function round(){var d=rounds[r];f=0;ui.innerHTML='<p class="qt" style="font-weight:600;color:#fff">'+(r+1)+' de '+rounds.length+' · Escribe la armadura de <b>'+d.txt+'</b>.</p><div class="svgbox" id="sg"></div><div class="row"><button class="btn sm" id="a1">Añadir ♯</button><button class="btn sm" id="a2">Añadir ♭</button><button class="btn ghost sm" id="a3">Quitar</button><button class="btn sm" id="ck">Comprobar</button></div><div class="fb" hidden></div>';
+  var fb=ui.querySelector('.fb'),sg=ui.querySelector('#sg'),missed=false;
+  function draw(){sg.innerHTML=A.staff({sig:f,notes:[],w:260});}
+  draw();
+  ui.querySelector('#a1').onclick=function(){f=f<0?1:Math.min(7,f+1);draw();fb.hidden=true;};
+  ui.querySelector('#a2').onclick=function(){f=f>0?-1:Math.max(-7,f-1);draw();fb.hidden=true;};
+  ui.querySelector('#a3').onclick=function(){f=f>0?f-1:f<0?f+1:0;draw();fb.hidden=true;};
+  ui.querySelector('#ck').onclick=function(){fb.hidden=false;
+   if(f===d.f){fb.className='fb ok';fb.innerHTML='Correcto. '+d.why;api.score(!missed);r++;ui.querySelector('#ck').disabled=true;
+    if(r<rounds.length){var nx=el('<div class="row"><button class="btn sm">Siguiente</button></div>');nx.firstChild.onclick=round;ui.appendChild(nx);}else api.done();}
+   else{missed=true;fb.className='fb bad';fb.textContent=f===0?'Aún no has añadido ninguna alteración.':'Tienes '+A.sigText(f)+'. Revisa el orden y la cantidad.';}};
+ }
+ round();}
+/* escritura en pentagrama */
+function entry(box,api,rounds){var r=0,ui=el('<div></div>');box.appendChild(ui);
+ function round(){var d=rounds[r],notes=[],wrap,fb,cyc=[null,1,-1,0];ui.innerHTML='<p class="qt" style="font-weight:600;color:#fff">'+(rounds.length>1?(r+1)+' de '+rounds.length+' · ':'')+d.txt+'</p><p class="lbl">Toca el pentagrama para colocar una nota en cada columna. Toca la misma nota otra vez para cambiar ♯, ♭, ♮ o quitarla.</p><div class="svgbox" id="en"></div><div class="row"><button class="btn sm" id="ck">Comprobar</button><button class="btn ghost sm" id="cl">Borrar</button><button class="btn ghost sm" id="pl">▶ Escuchar</button></div><div class="fb" hidden></div>';
+  wrap=ui.querySelector('#en');fb=ui.querySelector('.fb');var missed=false,locked=false;
+  function eff(n){return n.acc!==null?n.acc:A.sigAlt(d.sig,A.letterOfStep(n.s));}
+  function draw(res){var ns=[];notes.forEach(function(n,c){if(!n)return;ns.push({c:c,s:n.s,a:eff(n),sh:n.acc!==null,open:true,cls:res?res[c]:''});});
+   wrap.innerHTML=A.staff({sig:d.sig,notes:ns,hit:d.cols,gap:d.cols>6?44:60});}
+  function mids(){return notes.filter(Boolean).map(function(n){return A.midOf(A.stepNote(n.s,eff(n)));});}
+  wrap.addEventListener('click',function(e){if(locked)return;var h=e.target.closest('.hit');if(!h)return;var c=+h.dataset.c,s=+h.dataset.s,n=notes[c];
+   if(n&&n.s===s){var i=cyc.indexOf(n.acc)+1;if(i>=cyc.length)notes[c]=null;else n.acc=cyc[i];}else{notes[c]={s:s,acc:null};A.play(A.midOf(A.stepNote(s,A.sigAlt(d.sig,A.letterOfStep(s)))),1);}
+   fb.hidden=true;draw();});
+  ui.querySelector('#cl').onclick=function(){if(locked)return;notes=[];draw();fb.hidden=true;};
+  ui.querySelector('#pl').onclick=function(){var m=mids();if(m.length)A.seq(m,.4);};
+  ui.querySelector('#ck').onclick=function(){if(locked)return;fb.hidden=false;
+   var res=d.check(notes.map(function(n){return n?{s:n.s,a:eff(n)}:null;}));
+   draw(res.cls);
+   if(res.ok){locked=true;fb.className='fb ok';fb.innerHTML='Correcto. '+d.why;api.score(!missed);r++;ui.querySelector('#ck').disabled=true;
+    if(r<rounds.length){var nx=el('<div class="row"><button class="btn sm">Siguiente ejercicio</button></div>');nx.firstChild.onclick=round;ui.appendChild(nx);}else api.done();}
+   else{missed=true;fb.className='fb bad';fb.innerHTML=res.msg;}};
+  draw();}
+ round();}
+function expectCheck(exp){return function(ns){var cls=[],ok=true,miss=0;
+ exp.forEach(function(e,i){var n=ns[i];if(!n){cls[i]='';ok=false;miss++;return;}if(n.s===e.s&&n.a===e.a)cls[i]='ok';else{cls[i]='bad';ok=false;}});
+ return {ok:ok,cls:cls,msg:miss?'Faltan '+miss+' nota'+(miss>1?'s':'')+'.':'Las notas en rojo no son correctas. Revisa el patrón de la escala y qué alteraciones ya están en la armadura.'};};}
+/* ================= ETAPA 1 ================= */
+S(0,'Un centro de gravedad',function(b,api){
+ b.innerHTML='<div class="def"><b>Tonalidad:</b> sistema en el que los sonidos se organizan alrededor de una nota de reposo, la <b>tónica</b>.</div><p>No todas las notas de una melodía pesan lo mismo. Una de ellas funciona como casa y las demás se sienten más cerca o más lejos de ella. Escucha dos escaleras que empiezan igual.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál de las dos suena terminada?',audio:[{l:'Escalera A',m:[60,62,64,65,67,69,71]},{l:'Escalera B',m:[60,62,64,65,67,69,71,72]}],opts:['Escalera A','Escalera B'],ans:1,why:'La B llega al Do agudo, la tónica. La A se queda en Si, que pide subir a Do.'}]);});
+S(0,'Tónica, escala y jerarquía',function(b,api){
+ b.innerHTML='<p>Una tonalidad se apoya en tres ideas:</p><div class="scroll"><table class="tbl"><tr><th>Idea</th><th>Qué es</th></tr><tr><td>Centro tonal</td><td>La tónica: la nota donde la música descansa.</td></tr><tr><td>Escala</td><td>Siete sonidos ordenados que se toman como material.</td></tr><tr><td>Jerarquía y tendencias</td><td>Unos grados son más importantes que otros, y algunos tienden a moverse hacia otros.</td></tr></table></div><p style="margin-top:12px">Toca el teclado. Las teclas azules son la tónica (Do) de la escala de Do mayor.</p>';
+ var K=mkKb(b,60,72,function(m){A.play(m,1.2);K.flash(m,'ok');});K.mk[60]='tn';K.mk[72]='tn';K.draw();
+ var o=K.draw;K.flash=function(m,c){var prev=K.mk[m];K.mk[m]=c;o();setTimeout(function(){if(prev)K.mk[m]=prev;else delete K.mk[m];o();},350);};},true);
+S(0,'El nombre de una tonalidad',function(b,api){
+ b.innerHTML='<p>Una tonalidad se nombra con dos datos: la <b>tónica</b> y el <b>modo</b> (mayor o menor).</p><div class="scroll"><table class="tbl"><tr><th>Nombre</th><th>Tónica</th><th>Modo</th></tr><tr><td>Do mayor</td><td>Do</td><td>mayor</td></tr><tr><td>la menor</td><td>la</td><td>menor</td></tr><tr><td>Fa♯ mayor</td><td>Fa♯</td><td>mayor</td></tr></table></div><p class="lbl" style="margin-top:8px">Convención: las tonalidades mayores se escriben con mayúscula inicial y las menores en minúscula (Do mayor, do menor).</p><div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué dos datos nombran una tonalidad?',opts:['Armadura y compás','Tónica y modo','Tempo y dinámica','Clave y registro'],ans:1,why:'Por ejemplo, «Re menor» tiene tónica Re y modo menor.'},{q:'Re mayor y re menor tienen en común…',opts:['La armadura','La tónica','Las mismas siete notas','Nada'],ans:1,why:'Comparten la tónica; por eso se llaman homónimas. Su armadura es distinta.'}]);});
+S(0,'Escucha el tirón',function(b,api){
+ b.innerHTML='<p>Los acordes también se sienten atraídos hacia la tónica. El acorde de Sol con séptima (Sol–Si–Re–Fa) crea una tensión que pide resolver. Escúchalo y compara dos finales.</p><div id="qq"></div>';
+ var g7=[55,59,62,65];
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué resolución suena como un regreso a casa?',audio:[{l:'Solo el acorde de Sol7',m:g7,mode:'chord'},{l:'Final A',mode:'chords',m:[g7,[48,55,60,64]],dt:1000},{l:'Final B',mode:'chords',m:[g7,[51,58,63,67]],dt:1000}],opts:['Final A','Final B'],ans:0,why:'El Sol7 resuelve de forma natural a Do mayor (A). El final B suena inesperado porque la nota Si no sube a Do.'}]);});
+S(0,'Comprueba lo aprendido',function(b,api){quiz(b,api,[
+ {q:'Una tonalidad es…',opts:['Un conjunto de notas sin relación','Un sistema donde los sonidos se organizan alrededor de una tónica','Solo la armadura de clave','El volumen de una pieza'],ans:1,why:'La tónica es el centro y las demás notas se relacionan con ella.'},
+ {q:'¿Qué nota es la tónica de Sol mayor?',opts:['Re','Si','Sol','Fa♯'],ans:2,why:'La tónica da nombre a la tonalidad.'},
+ {q:'La escalera que termina en Si suena…',opts:['Terminada','Suspendida, pide subir a la tónica'],ans:1,why:'El Si es la sensible: está a un semitono de la tónica y tiende a subir.'}]);});
+/* ================= ETAPA 2 ================= */
+var DEG=[['I','Tónica','Es el centro: la nota de reposo.'],['II','Supertónica','Está justo encima de la tónica.'],['III','Mediante','Queda a medio camino entre la tónica y la dominante. Define el modo.'],['IV','Subdominante','Está una quinta por debajo de la tónica.'],['V','Dominante','Está una quinta por encima de la tónica. Es el grado que más la afirma.'],['VI','Superdominante','Está encima de la dominante (también se llama submediante).'],['VII','Sensible','Está a un semitono de la tónica y tiende a subir hacia ella. En el menor natural, a un tono, se llama subtónica.']];
+S(1,'Los grados de la escala',function(b,api){
+ b.innerHTML='<p>Cada nota de la escala ocupa un <b>grado</b>, que se numera con romanos y tiene nombre propio. Toca las siete teclas de Do mayor para descubrirlos.</p>';
+ var seen={},map={60:0,62:1,64:2,65:3,67:4,69:5,71:6,72:0},info=el('<div class="info">Toca una tecla blanca entre Do y Do.</div>'),prog=el('<p class="lbl"></p>'),n=0;
+ var K=mkKb(b,60,72,function(m){A.play(m,1.4);K.flash(m,'hl');if(map[m]===undefined){info.innerHTML='Esa tecla no pertenece a la escala de Do mayor.';return;}
+  var d=DEG[map[m]];info.innerHTML='<b style="color:#fff;font-family:var(--disp);font-size:1.4rem">'+d[0]+' · '+d[1]+'</b><br>'+d[2];
+  if(!seen[map[m]]){seen[map[m]]=1;n++;}prog.textContent='Grados descubiertos: '+n+' de 7';if(n===7)api.done();});
+ b.appendChild(info);b.appendChild(prog);prog.textContent='Grados descubiertos: 0 de 7';});
+S(1,'Grados tonales, modales y de paso',function(b,api){
+ b.innerHTML='<p>Los grados no tienen la misma importancia. La armonía tradicional española los agrupa así:</p><div class="scroll"><table class="tbl"><tr><th>Tipo</th><th>Grados</th><th>Papel</th></tr><tr><td>Tonales</td><td>I, IV, V</td><td>Fijan la tonalidad.</td></tr><tr><td>Modales</td><td>III, VI</td><td>Definen si el modo es mayor o menor.</td></tr><tr><td>De paso</td><td>II, VII</td><td>Enlazan y conducen a los demás.</td></tr></table></div><p class="lbl" style="margin:8px 0 14px">Otros manuales usan otra terminología, pero esta división es la habitual en España e Hispanoamérica.</p>';
+ match(b,api,{head:'Clasifica cada grado:',cats:['Tonal','Modal','De paso'],rows:[['I',0],['II',2],['III',1],['IV',0],['V',0],['VI',1],['VII',2]].map(function(x){return {l:'Grado '+x[0],ans:x[1]};})});});
+S(1,'Tonalidades mayores y menores',function(b,api){
+ b.innerHTML='<p>La diferencia entre modos se oye en la <b>tercera</b> (grado III), más la sexta y la séptima. Escucha Do mayor y do menor.</p>';
+ var K=mkKb(b,60,72,function(m){A.play(m,1);K.flash(m,'hl');});
+ var row=el('<div class="row"><button class="btn sm" data-s="M">▶ Do mayor</button><button class="btn sm" data-s="m">▶ do menor</button></div>');b.appendChild(row);
+ row.onclick=function(e){var s=e.target.dataset.s;if(!s)return;var sc=A.scaleN(A.tonicOf(0),s==='M'?'M':'m',4,8),ms=sc.map(A.midOf);A.seq(ms,.36,function(i){K.flash(ms[i],'ok');});};
+ b.insertAdjacentHTML('beforeend','<div class="scroll"><table class="tbl"><tr><th></th><th>Mayor</th><th>Menor natural</th></tr><tr><td>Tercera (III)</td><td>4 semitonos</td><td>3 semitonos</td></tr><tr><td>Sexta (VI)</td><td>Mayor</td><td>Menor</td></tr><tr><td>Séptima (VII)</td><td>Sensible, a 1 semitono</td><td>Subtónica, a 1 tono</td></tr><tr><td>Carácter habitual</td><td>Luminoso</td><td>Sombrío o melancólico</td></tr></table></div><div id="qq" style="margin-top:14px"></div>');
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué grado distingue de inmediato el modo mayor del menor?',opts:['El II','El III (la tercera)','El IV','El V'],ans:1,why:'La tercera mayor suena abierta y la menor suena más oscura. La quinta es igual en ambos.'}]);});
+S(1,'Funciones tonales',function(b,api){
+ b.innerHTML='<p>Los acordes de la tonalidad cumplen tres <b>funciones</b>: reposo, alejamiento y tensión.</p><div class="scroll"><table class="tbl"><tr><th>Función</th><th>Grados</th><th>Sensación</th></tr><tr><td>Tónica (T)</td><td>I (también VI, III)</td><td>Reposo</td></tr><tr><td>Subdominante (S)</td><td>IV (también II)</td><td>Alejamiento</td></tr><tr><td>Dominante (D)</td><td>V (también VII)</td><td>Tensión que pide resolver</td></tr></table></div><p style="margin-top:12px">Escucha los tres acordes principales de Do mayor:</p>';
+ var row=el('<div class="row"></div>');[['I · Do (T)',1],['IV · Fa (S)',4],['V · Sol (D)',5]].forEach(function(c){var bt=el('<button class="btn ghost sm">▶ '+c[0]+'</button>');bt.onclick=function(){var m=A.triad(0,'M',c[1],4);A.chord([m[0]-12].concat(m),1.8);};row.appendChild(bt);});b.appendChild(row);
+ var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);
+ match(w,api,{head:'¿Qué función cumple cada grado?',cats:['Tónica','Subdominante','Dominante'],rows:[['I',0],['IV',1],['V',2],['II',1],['VII',2],['VI',0]].map(function(x){return {l:'Grado '+x[0],ans:x[1]};})});});
+S(1,'Relativas y homónimas',function(b,api){
+ b.innerHTML='<p>Dos tonalidades pueden estar emparentadas de dos maneras:</p><div class="def"><b>Relativas:</b> distinto modo y <b>misma armadura</b>. La menor relativa empieza en el VI grado de la mayor, una tercera menor por debajo de su tónica.<br><b>Homónimas:</b> misma <b>tónica</b> y distinto modo.</div><p class="lbl">Do mayor y la menor son relativas (sin alteraciones).</p><div class="svgbox">'+A.scaleStaff(0,'M',{lab:['Do','Re','Mi','Fa','Sol','La','Si','Do']})+'</div><div class="svgbox">'+A.scaleStaff(0,'m',{lab:['La','Si','Do','Re','Mi','Fa','Sol','La']})+'</div><p class="lbl">Do mayor y do menor son homónimas (3 bemoles en do menor).</p><div class="svgbox">'+A.scaleStaff(-3,'m',{lab:['Do','Re','Mi♭','Fa','Sol','La♭','Si♭','Do']})+'</div><div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'La relativa menor de Do mayor es…',opts:['do menor','la menor','mi menor','re menor'],ans:1,why:'Está en el VI grado de Do mayor y comparten armadura.'},{q:'La homónima de Sol mayor es…',opts:['mi menor','sol menor','re menor','si menor'],ans:1,why:'Misma tónica, distinto modo.'},{q:'mi menor es la relativa de…',opts:['Sol mayor','Mi mayor','Re mayor','Si mayor'],ans:0,why:'Mi es el VI grado de Sol mayor.'}]);});
+S(1,'Familias de tonalidades',function(b,api){
+ var rows='';for(var f=-7;f<=7;f++)rows+='<tr><td>'+A.keyName(f,'M')+'</td><td>'+A.keyName(f,'m')+'</td><td>'+(f===0?'0':Math.abs(f)+(f>0?'♯':'♭'))+'</td></tr>';
+ b.innerHTML='<p>Se clasifican por su armadura en tres familias: sin alteraciones, con sostenidos y con bemoles. Con hasta siete alteraciones hay <b>15 tonalidades mayores y 15 menores</b>.</p><div class="scroll" style="max-height:320px;overflow-y:auto"><table class="tbl"><tr><th>Mayor</th><th>Menor relativa</th><th>Armadura</th></tr>'+rows+'</table></div><div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuántas tonalidades mayores hay con 0 a 7 alteraciones?',opts:['12','14','15','21'],ans:2,why:'Do mayor, 7 con sostenidos y 7 con bemoles.'},{q:'¿Qué tonalidad mayor tiene 3 bemoles?',opts:['Si♭ mayor','Mi♭ mayor','La♭ mayor','Fa mayor'],ans:1,why:'Los bemoles son Si♭, Mi♭ y La♭.'},{q:'¿Qué tonalidad menor tiene la misma armadura que Re mayor?',opts:['re menor','si menor','mi menor','fa♯ menor'],ans:1,why:'Si es el VI grado de Re mayor. Ambas tienen 2 sostenidos.'}]);});
+/* ================= ETAPA 3 ================= */
+S(2,'Construir la escala mayor',function(b,api){
+ b.innerHTML='<div class="def">Patrón de la escala mayor: <b>T T S T T T S</b><br>T = tono (2 semitonos) · S = semitono (1)</div><div class="scroll"><table class="tbl"><tr><th>Grado</th><th>I</th><th>II</th><th>III</th><th>IV</th><th>V</th><th>VI</th><th>VII</th><th>I</th></tr><tr><td>Do mayor</td><td>Do</td><td>Re</td><td>Mi</td><td>Fa</td><td>Sol</td><td>La</td><td>Si</td><td>Do</td></tr><tr><td>Distancia</td><td colspan="2">T</td><td>T</td><td>S</td><td>T</td><td>T</td><td>T</td><td>S</td></tr></table></div><p style="margin-top:12px">Ahora aplícalo con una tónica distinta: en el teclado, las teclas negras te darán las alteraciones.</p>';
+ kbBuild(b,api,[{f:1,sc:'M',tm:'M',txt:'Sol mayor',why:'Sol La Si Do Re Mi Fa♯. El Fa♯ aparece porque el VII grado debe quedar a un semitono de la tónica.'},{f:-1,sc:'M',tm:'M',txt:'Fa mayor',why:'Fa Sol La Si♭ Do Re Mi. El Si♭ mantiene el semitono entre el III y el IV grado.'}]);});
+S(2,'Construir las escalas menores',function(b,api){
+ b.innerHTML='<div class="def"><b>Menor natural:</b> T S T T S T T<br><b>Menor armónica:</b> eleva el VII grado, así se crea una sensible: T S T T S 1½ S<br><b>Menor melódica (ascendente):</b> eleva VI y VII; al descender vuelve a la natural.</div><p>Construye dos escalas con tónica Re:</p>';
+ kbBuild(b,api,[{f:-1,sc:'m',tm:'m',txt:'Re menor natural',why:'Re Mi Fa Sol La Si♭ Do. Es la escala de Fa mayor empezando en su VI grado.'},{f:-1,sc:'h',tm:'m',txt:'Re menor armónica',why:'Re Mi Fa Sol La Si♭ Do♯. El Do♯ es la sensible que lleva a Re.'}]);});
+S(2,'Armaduras: el orden de las alteraciones',function(b,api){
+ b.innerHTML='<p>La armadura fija qué notas se alteran durante toda la pieza. Las alteraciones llegan siempre en el mismo orden:</p><div class="def">Sostenidos: <b>Fa Do Sol Re La Mi Si</b><br>Bemoles: <b>Si Mi La Re Sol Do Fa</b> (el orden inverso)</div><p>Cada alteración nueva está a una quinta de la anterior. Recorre las armaduras con las flechas y mira qué tonalidades representan.</p>';
+ var f=0,seen={0:1},box=el('<div class="svgbox"></div>'),info=el('<div class="info"></div>'),row=el('<div class="row"><button class="btn sm" id="l">◀ Más bemoles</button><button class="btn sm" id="r">Más sostenidos ▶</button><button class="btn ghost sm" id="p">▶ Escuchar tónica</button></div>');
+ b.appendChild(box);b.appendChild(row);b.appendChild(info);
+ function draw(){box.innerHTML=A.staff({sig:f,notes:[],w:280});info.innerHTML='<b style="color:#fff">Armadura: '+A.sigText(f)+'</b><br>Mayor: '+A.keyName(f,'M')+' · Menor: '+A.keyName(f,'m')+'<br><span class="lbl">Armaduras vistas: '+Object.keys(seen).length+' de 6</span>';if(Object.keys(seen).length>=6)api.done();}
+ row.querySelector('#l').onclick=function(){f=Math.max(-7,f-1);seen[f]=1;draw();};
+ row.querySelector('#r').onclick=function(){f=Math.min(7,f+1);seen[f]=1;draw();};
+ row.querySelector('#p').onclick=function(){var m=A.triad(f,'M',1,4);A.chord([m[0]-12].concat(m),1.8);};
+ draw();});
+S(2,'Escribe la armadura',function(b,api){
+ b.innerHTML='<p>Ahora tú escribes la armadura. Los botones añaden las alteraciones siempre en el orden correcto.</p>';
+ sigBuild(b,api,[{f:4,txt:'Mi mayor',why:'Mi mayor tiene 4 sostenidos: Fa♯, Do♯, Sol♯ y Re♯.'},{f:-3,txt:'Mi♭ mayor',why:'Mi♭ mayor tiene 3 bemoles: Si♭, Mi♭ y La♭.'},{f:2,txt:'si menor',why:'si menor comparte armadura con su relativa Re mayor: Fa♯ y Do♯.'}]);});
+S(2,'El círculo de quintas',function(b,api){
+ b.innerHTML='<p>El círculo de quintas ordena las tonalidades por su armadura. Al avanzar en sentido horario subes una quinta y añades un sostenido. En sentido antihorario añades un bemol. El anillo exterior son las mayores y el interior sus relativas menores.</p><p class="lbl">Toca 5 sectores distintos para continuar.</p>';
+ var sel=null,seen={},box=el('<div class="svgbox"></div>'),info=el('<div class="info">Toca una tonalidad del círculo.</div>');b.appendChild(box);b.appendChild(info);
+ function draw(){box.innerHTML=A.wheel({sel:sel});}
+ box.addEventListener('click',function(e){var s=e.target.closest('.sec');if(!s)return;var i=+s.dataset.i,r=s.dataset.r;sel={i:i,r:r};seen[r+i]=1;draw();
+  var fs=A.fOf(i),h='';fs.forEach(function(f){var mode=r==='M'?'M':'m',t=A.keyTonic(f,mode),sc=A.scaleN(t,r==='M'?'M':'m',4,8);
+   h+='<p style="margin:0 0 6px"><b style="color:#fff;font-family:var(--disp);font-size:1.35rem">'+A.keyName(f,mode)+'</b> · '+A.sigText(f)+'<br>Relativa: '+A.keyName(f,mode==='M'?'m':'M')+'<br><span class="lbl">'+sc.map(function(n){return A.nmA(n.l,n.a);}).join(' – ')+'</span></p>';});
+  info.innerHTML=h;var f0=fs[0],m0=A.triad(f0,r==='M'?'M':'m',1,4);A.seq(m0.concat([m0[0]+12]),.2);
+  var n=Object.keys(seen).length;if(n>=5)api.done();});
+ draw();});
+S(2,'Cómo reconocer la tonalidad',function(b,api){
+ b.innerHTML='<div class="def"><b>Con sostenidos:</b> la tónica mayor está un semitono por encima del último sostenido (la sensible).<br><b>Con bemoles:</b> la tónica mayor es el penúltimo bemol.<br><b>Menor:</b> la relativa está en el VI grado de la mayor.</div><div id="qq"></div>';
+ var q=function(f){return A.staff({sig:f,notes:[],w:260});};
+ quiz(b.querySelector('#qq'),api,[
+  {pre:q(3),q:'3 sostenidos (Fa♯, Do♯, Sol♯). ¿Tonalidad mayor?',opts:['Re mayor','La mayor','Mi mayor','Fa mayor'],ans:1,why:'El último sostenido es Sol♯; un semitono arriba está La.'},
+  {pre:q(-5),q:'5 bemoles. ¿Tonalidad mayor?',opts:['Sol♭ mayor','Re♭ mayor','La♭ mayor','Mi♭ mayor'],ans:1,why:'Los bemoles son Si♭ Mi♭ La♭ Re♭ Sol♭. El penúltimo es Re♭.'},
+  {pre:q(5),q:'5 sostenidos. ¿Tonalidad mayor?',opts:['Si mayor','La mayor','Fa♯ mayor','Mi mayor'],ans:0,why:'El último sostenido es La♯; un semitono arriba está Si.'},
+  {pre:q(4),q:'4 sostenidos. ¿Cuál es la relativa menor?',opts:['la menor','do♯ menor','mi menor','fa♯ menor'],ans:1,why:'Mi mayor tiene 4♯; su VI grado es Do♯.'}]);});
+S(2,'Los acordes de la tonalidad',function(b,api){
+ b.innerHTML='<p>Sobre cada grado se construye una tríada con las notas de la escala. En Do mayor salen estas calidades. Toca 4 para continuar.</p>';
+ var ch=[['I','Do','mayor'],['II','re','menor'],['III','mi','menor'],['IV','Fa','mayor'],['V','Sol','mayor'],['VI','la','menor'],['VII','si','disminuido']],g=el('<div class="grid7"></div>'),seen={};
+ ch.forEach(function(c,i){var bt=el('<button class="gc"><b>'+c[0]+'</b>'+c[1]+' '+c[2]+'</button>');bt.onclick=function(){var m=A.triad(0,'M',i+1,4);A.chord([m[0]-12].concat(m),1.6);bt.classList.add('seen');seen[i]=1;if(Object.keys(seen).length>=4)done();};g.appendChild(bt);});
+ b.appendChild(g);var d=false,qd=el('<div id="qq" style="margin-top:14px"></div>');b.appendChild(qd);
+ function done(){if(d)return;d=true;quiz(qd,api,[{q:'¿Qué acorde se forma sobre el V grado de Do mayor?',opts:['Sol mayor','sol menor','Sol disminuido','Si mayor'],ans:0,why:'Sol–Si–Re es una tríada mayor.'},{q:'¿Qué grado forma el acorde disminuido en modo mayor?',opts:['II','IV','VI','VII'],ans:3,why:'Si–Re–Fa tiene dos terceras menores.'}]);}});
+/* ================= ETAPA 4 ================= */
+S(3,'Reglas de la armadura y sus excepciones',function(b,api){
+ b.innerHTML='<div class="def"><b>Reglas</b><br>1. Las alteraciones se escriben siempre en el mismo orden.<br>2. Una armadura tiene solo sostenidos o solo bemoles.<br>3. La armadura vale para toda la pieza y para la mayor y su relativa menor.</div><div class="def"><b>Excepciones del método</b><br>Fa mayor tiene un solo bemol (Si♭), así que no tiene penúltimo: hay que memorizarla.<br>Do mayor y la menor no tienen alteraciones.</div><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Por qué Fa mayor no sigue la regla del «penúltimo bemol»?',opts:['Tiene dos bemoles','Solo tiene un bemol y no hay penúltimo','Es una tonalidad menor','Tiene sostenidos'],ans:1,why:'Con un solo bemol (Si♭) hay que recordar que la tonalidad es Fa mayor.'},{q:'¿Puede una armadura combinar sostenidos y bemoles?',opts:['Sí, si la pieza modula','No, es solo de un tipo'],ans:1,why:'Los cambios de tonalidad se escriben con una nueva armadura o con alteraciones accidentales.'},{q:'Mi♭ mayor y do menor tienen…',opts:['Distinta armadura','3 bemoles en común','La misma tónica','1 sostenido'],ans:1,why:'Son relativas y comparten Si♭, Mi♭, La♭.'}]);});
+S(3,'Tonalidades enarmónicas',function(b,api){
+ b.innerHTML='<p>Algunas tonalidades suenan igual pero se escriben distinto. Son <b>enarmónicas</b>.</p><div class="svgbox"><p class="lbl" style="margin:0">Si mayor (5♯)</p>'+A.staff({sig:5,notes:[],w:260})+'<p class="lbl" style="margin:0">Do♭ mayor (7♭)</p>'+A.staff({sig:-7,notes:[],w:260})+'</div><p>Los pares enarmónicos son Si/Do♭, Fa♯/Sol♭ y Re♭/Do♯. Se prefiere la que tiene menos alteraciones. Una tonalidad «teórica», como Sol♯ mayor (8♯, con Fa doble sostenido), casi no se usa y se escribe como La♭ mayor.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Do♯ mayor (7♯) y Re♭ mayor (5♭): ¿cómo suenan?',opts:['Igual','Re♭ más grave','Do♯ más agudo'],ans:0,why:'Son enarmónicas: mismas teclas, distinta escritura.'},{q:'¿Cuál de las dos es más práctica?',opts:['Do♯ mayor','Re♭ mayor'],ans:1,why:'Tiene 5 alteraciones frente a 7.'},{q:'Sol♯ mayor necesitaría 8 sostenidos. ¿Qué se hace?',opts:['Se escribe como La♭ mayor','Se usan 8 sostenidos','No se puede tocar'],ans:0,why:'La♭ mayor (4♭) suena igual y es mucho más fácil de leer.'}]);});
+S(3,'La menor armónica y melódica',function(b,api){
+ b.innerHTML='<p>La armadura de una tonalidad menor es la de su relativa mayor. Las notas que crean la sensible se escriben como <b>alteraciones accidentales</b>, no en la armadura.</p><p class="lbl">la menor armónica (el Sol♯ es accidental):</p><div class="svgbox">'+A.scaleStaff(0,'h',{lab:['La','Si','Do','Re','Mi','Fa','Sol♯','La']})+'</div><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'En la menor armónica, ¿qué grado se eleva?',opts:['II','IV','VII','V'],ans:2,why:'Se eleva el VII para tener sensible a un semitono de la tónica.'},{q:'¿El Sol♯ forma parte de la armadura de la menor?',opts:['Sí','No, es una alteración accidental'],ans:1,why:'La armadura de la menor no tiene alteraciones.'},{q:'En la menor melódica ascendente se elevan…',opts:['VI y VII','Solo II','III y V','Ninguno'],ans:0,why:'Así se evita el intervalo de segunda aumentada entre VI y VII.'}]);});
+S(3,'Cómo se mueven las funciones',function(b,api){
+ b.innerHTML='<p>En la armonía clásica las funciones siguen un orden natural:</p><div class="def"><b>T → S → D → T</b><br>La tónica puede ir a cualquier función. La subdominante prepara la dominante. La dominante resuelve a tónica.</div><p>Ir de dominante a subdominante (<b>D → S</b>) se llama <b>retrogradación</b>. Se evita en la armonía clásica, aunque es muy común en el blues y el rock.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál de estos enlaces es una retrogradación?',opts:['T → S','S → D','D → T','D → S'],ans:3,why:'Va en sentido contrario al orden normal de la función.'},{q:'La resolución más natural de la dominante es…',opts:['A la subdominante','A la tónica'],ans:1,why:'La tensión de la dominante se descarga en la tónica.'}]);});
+/* ================= ETAPA 5 ================= */
+var HIMNO=[1,1,2,3,3,2,1,0,-1,-1,0,1,0,-1,-1],HNAME=['Fa♯','Fa♯','Sol','La','La','Sol','Fa♯','Mi','Re','Re','Mi','Fa♯','Mi','Re','Re'],HDEG=['3','3','4','5','5','4','3','2','1','1','2','3','2','1','1'];
+function himnoStaff(hl){return A.staff({sig:2,gap:34,notes:HIMNO.map(function(s,i){return {s:s,stem:true,lab:HDEG[i],cls:hl===i?'hl':''};})});}
+S(4,'Himno de la alegría (Re mayor)',function(b,api){
+ b.innerHTML='<p>El tema final de la Novena sinfonía de Beethoven está en Re mayor. Con dos sostenidos en la armadura, el Fa y el Do suenan siempre sostenidos. Los números son los grados de la escala. El ritmo está simplificado.</p><div class="svgbox" id="s">'+himnoStaff(-1)+'</div><div class="row"><button class="btn sm" id="p">▶ Escuchar</button></div><p class="lbl">Observa que la melodía empieza en el III grado y termina en el I: reposa en la tónica.</p>';
+ b.querySelector('#p').onclick=function(){var ms=mapMid(2,HIMNO.map(function(s){return {s:s};}));A.seq(ms,.42,function(i){b.querySelector('#s').innerHTML=himnoStaff(i);setTimeout(function(){if(i===ms.length-1)b.querySelector('#s').innerHTML=himnoStaff(-1);},400);});};},true);
+var ELISE=[{s:7,a:0,n:'Mi'},{s:6,a:1,n:'Re♯'},{s:7,a:0,n:'Mi'},{s:6,a:1,n:'Re♯'},{s:7,a:0,n:'Mi'},{s:4,a:0,n:'Si'},{s:6,a:0,n:'Re',sh:true},{s:5,a:0,n:'Do'},{s:3,a:0,n:'La'}];
+function eliseStaff(hl){return A.staff({sig:0,gap:44,notes:ELISE.map(function(n,i){return {s:n.s,a:n.a,sh:n.sh,stem:true,lab:n.n,cls:hl===i?'hl':''};})});}
+S(4,'Para Elisa (la menor)',function(b,api){
+ b.innerHTML='<p>Este tema de Beethoven está en la menor y no tiene alteraciones en la armadura. El Re♯ es una alteración accidental: es la sensible de Mi, la dominante. El Re natural vuelve a escribirse con becuadro (♮) porque el Re♯ anterior sigue vigente dentro del compás.</p><div class="svgbox" id="s">'+eliseStaff(-1)+'</div><div class="row"><button class="btn sm" id="p">▶ Escuchar</button></div>';
+ b.querySelector('#p').onclick=function(){var ms=mapMid(0,ELISE);A.seq(ms,.3,function(i){b.querySelector('#s').innerHTML=eliseStaff(i);setTimeout(function(){if(i===ms.length-1)b.querySelector('#s').innerHTML=eliseStaff(-1);},300);});};},true);
+S(4,'¿Mayor o menor? Al oído',function(b,api){
+ b.innerHTML='<p>Escucha cada fragmento y decide el modo. Fíjate en la tercera sobre la tónica.</p><div id="qq"></div>';
+ var O=['Mayor','Menor'];
+ quiz(b.querySelector('#qq'),api,[
+  {q:'Arpegio 1',audio:[{l:'Escuchar',m:[60,64,67,72],dt:.4}],opts:O,ans:0,why:'Do–Mi–Sol: tercera mayor.'},
+  {q:'Arpegio 2',audio:[{l:'Escuchar',m:[60,63,67,72],dt:.4}],opts:O,ans:1,why:'Do–Mi♭–Sol: tercera menor.'},
+  {q:'Escala corta 3 (empieza en Re)',audio:[{l:'Escuchar',m:[62,64,66,67,69],dt:.4}],opts:O,ans:0,why:'Re–Mi–Fa♯: tercera mayor.'},
+  {q:'Escala corta 4 (empieza en Mi)',audio:[{l:'Escuchar',m:[64,66,67,69,71],dt:.4}],opts:O,ans:1,why:'Mi–Fa♯–Sol: tercera menor.'}]);});
+S(4,'La cadencia I – IV – V – I',function(b,api){
+ b.innerHTML='<p>Los tres acordes principales y el regreso a la tónica forman la cadencia que mejor afirma una tonalidad. Elige una y escucha cómo se mueven las funciones.</p><div class="row" id="ks"><button class="btn sm" data-f="0" data-m="M">▶ Do mayor</button><button class="btn sm" data-f="1" data-m="M">▶ Sol mayor</button><button class="btn sm" data-f="0" data-m="m">▶ la menor</button></div><div class="row" id="ch" style="gap:10px"></div><p class="lbl">En menor, el acorde de dominante suele ser mayor para que exista la sensible.</p>';
+ var chp=b.querySelector('#ch');
+ b.querySelector('#ks').onclick=function(e){var t=e.target.closest('button');if(!t)return;var f=+t.dataset.f,mode=t.dataset.m,sc=A.scaleN(A.keyTonic(f,mode),mode==='M'?'M':'h',4,8),ds=[1,4,5,1],fn=['T','S','D','T'];
+  chp.innerHTML=ds.map(function(d,i){var n=sc[d-1];return '<span class="pill" data-i="'+i+'">'+fn[i]+' · '+A.nmA(n.l,n.a)+'</span>';}).join('');
+  A.chords(ds.map(function(d){var m=A.triad(f,mode,d,4);return [m[0]-12].concat(m);}),900,function(i){[].forEach.call(chp.children,function(c,j){c.style.background=j===i?'#fff':'';c.style.color=j===i?'#0B1B44':'';});});api.done();};});
+/* ================= ETAPA 6 ================= */
+S(5,'Análisis: Himno de la alegría',function(b,api){
+ b.innerHTML='<p>Sigue el método: armadura, tónica y modo.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{pre:himnoStaff(-1),q:'¿Qué alteraciones tiene la armadura?',opts:['Fa♯ y Do♯','Solo Fa♯','Si♭ y Mi♭','Ninguna'],ans:0,why:'Dos sostenidos: Fa♯ y Do♯.'},{q:'¿Qué dos tonalidades comparten esa armadura?',opts:['Re mayor y si menor','Sol mayor y mi menor','La mayor y fa♯ menor','Do mayor y la menor'],ans:0,why:'Re mayor y su relativa si menor.'},{q:'La melodía termina en Re. ¿Cuál es la tonalidad?',opts:['Re mayor','si menor'],ans:0,why:'Termina en la tónica Re y se apoya en la tercera mayor, Fa♯.'},{q:'El Fa♯ inicial es el grado…',opts:['III','IV','V','VII'],ans:0,why:'Re–Mi–Fa♯: tercer grado.'}]);});
+S(5,'Análisis: Para Elisa',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{pre:eliseStaff(-1),q:'¿Cuántas alteraciones tiene la armadura?',opts:['Ninguna','1 sostenido','3 bemoles'],ans:0,why:'Ninguna: es la menor o Do mayor.'},{q:'La melodía termina en La y todo gira alrededor de Mi. ¿Tonalidad?',opts:['Do mayor','la menor','mi menor','La mayor'],ans:1,why:'Termina en La y el Do cae sobre la tercera menor.'},{q:'¿Qué es el Re♯?',opts:['Parte de la armadura','Una alteración accidental: la sensible de Mi','Un error de escritura'],ans:1,why:'Es la sensible de Mi, la dominante de la menor.'},{q:'¿Qué función cumple Mi dentro de la menor?',opts:['Tónica','Subdominante','Dominante'],ans:2,why:'Mi es el V grado, la dominante.'}]);});
+var PACH=[6,3,4,1,2,-1,2,3],PN=['Re','La','Si','Fa♯','Sol','Re','Sol','La'];
+S(5,'Análisis: el bajo del Canon de Pachelbel',function(b,api){
+ b.innerHTML='<p>El Canon en Re de Pachelbel repite ocho notas en el bajo. Aquí se escriben en clave de sol y más agudas para leerlas fácilmente. Identifica el grado de cada una en Re mayor.</p>';
+ var bx=el('<div class="svgbox">'+A.staff({sig:2,gap:40,notes:PACH.map(function(s,i){return {s:s,stem:true,lab:PN[i]};})})+'</div>'),pl=el('<div class="row"><button class="btn ghost sm">▶ Escuchar el bajo</button></div>');b.appendChild(bx);b.appendChild(pl);
+ pl.firstChild.onclick=function(){A.seq(mapMid(2,PACH.map(function(s){return {s:s};})),.5);};
+ var D=['I','II','III','IV','V','VI','VII'];
+ match(b,api,{head:'¿Qué grado es cada nota?',cats:D,rows:PN.map(function(n,i){return {l:(i+1)+'. '+n,ans:[0,4,5,2,3,0,3,4][i]};})});});
+S(5,'Análisis: funciones del Canon',function(b,api){
+ b.innerHTML='<p>Los acordes del canon son <b>Re – La – si – fa♯ – Sol – Re – Sol – La</b>. Escúchalos y clasifica su función.</p>';
+ var row=el('<div class="row"><button class="btn ghost sm">▶ Escuchar los acordes</button></div>');b.appendChild(row);
+ row.firstChild.onclick=function(){var degs=[1,5,6,3,4,1,4,5];A.chords(degs.map(function(d){var m=A.triad(2,'M',d,3);return [m[0]-12].concat(m);}),800);};
+ var ch=['Re (I)','La (V)','si (VI)','fa♯ (III)','Sol (IV)','Re (I)','Sol (IV)','La (V)'],fn=[0,2,0,0,1,0,1,2];
+ match(b,api,{head:'Tónica, subdominante o dominante:',cats:['Tónica','Subdominante','Dominante'],rows:ch.map(function(c,i){return {l:c,ans:fn[i]};})});});
+/* ================= ETAPA 7 ================= */
+S(6,'Escribe escalas en el pentagrama',function(b,api){
+ function mk(sig,steps,alts,txt,why){var exp=steps.map(function(s,i){return {s:s,a:alts[i]};});return {sig:sig,cols:8,txt:txt,why:why,check:expectCheck(exp)};}
+ entry(b,api,[
+  mk(1,[2,3,4,5,6,7,8,9],[0,0,0,0,0,0,1,0],'Escribe la escala de <b>Sol mayor</b> con su armadura, de Sol4 a Sol5.','El Fa♯ no necesita sostenido junto a la nota: ya está en la armadura.'),
+  mk(0,[3,4,5,6,7,8,9,10],[0,0,0,0,0,0,1,0],'Escribe la escala de <b>la menor armónica</b>, de La4 a La5.','La armadura no tiene alteraciones, así que el Sol♯ se escribe con su propio sostenido.'),
+  mk(-2,[4,5,6,7,8,9,10,11],[-1,0,0,-1,0,0,0,-1],'Escribe la escala de <b>Si♭ mayor</b> con su armadura, de Si♭4 a Si♭5.','Los bemoles Si♭ y Mi♭ ya vienen en la armadura.')]);});
+S(6,'Compón un motivo en Fa mayor',function(b,api){
+ b.innerHTML='<p>Compón un motivo de 4 notas en <b>Fa mayor</b> (armadura con Si♭). Reglas: usa notas de la escala y termina en la tónica, Fa.</p>';
+ var scp=[5,7,9,10,0,2,4];
+ entry(b,api,[{sig:-1,cols:4,txt:'Escribe 4 notas en Fa mayor.',why:'Has creado una frase que termina en reposo. Escúchala con el botón.',check:function(ns){var cls=[],bad=[],ok=true;
+  if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada una de las 4 columnas.'};
+  ns.forEach(function(n,i){var pc=A.midOf(A.stepNote(n.s,n.a))%12;if(scp.indexOf(pc)<0){cls[i]='bad';ok=false;bad.push('la nota '+(i+1)+' no pertenece a Fa mayor');}else cls[i]='';});
+  var last=A.midOf(A.stepNote(ns[3].s,ns[3].a))%12;if(last!==5){ok=false;cls[3]='bad';bad.push('la última nota debe ser Fa');}
+  var dist={};ns.forEach(function(n){dist[n.s]=1;});if(Object.keys(dist).length<3){ok=false;bad.push('usa al menos 3 alturas distintas');}
+  if(ok)cls=ns.map(function(){return 'ok';});return {ok:ok,cls:cls,msg:'Revisa: '+bad.join('; ')+'.'};}}]);});
+/* ================= ETAPA 8 ================= */
+S(7,'¿En qué tonalidad está esta pieza?',function(b,api){
+ b.innerHTML='<div class="def"><b>Método</b><br>1. Lee la armadura: te da dos candidatas, una mayor y su relativa menor.<br>2. Mira la nota final y el bajo.<br>3. Busca la sensible como alteración accidental (señal de menor).</div><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[
+  {pre:A.staff({sig:-3,notes:[],w:260}),q:'Armadura de 3♭. La pieza termina en Do y usa Si♮ en la cadencia final.',opts:['Mi♭ mayor','do menor','fa menor','sol menor'],ans:1,why:'3♭ son Mi♭ mayor o do menor. El final en Do con sensible Si♮ indica do menor.'},
+  {pre:A.staff({sig:4,notes:[],w:260}),q:'Armadura de 4♯. El bajo termina en Mi y nunca aparece Si♯.',opts:['Mi mayor','do♯ menor','La mayor','Si mayor'],ans:0,why:'En do♯ menor se esperaría Si♯ como sensible. Termina en Mi: Mi mayor.'},
+  {pre:A.staff({sig:-1,notes:[],w:260}),q:'Armadura de 1♭. La melodía termina en Re y aparece Do♯.',opts:['Fa mayor','re menor','sol menor','Si♭ mayor'],ans:1,why:'1♭ es Fa mayor o re menor. El Do♯ es la sensible de re menor.'}]);});
+var FJC=[-2,-1,0,-2,-2,-1,0,-2,0,1,2,0,1,2],FJG=[2,3,4,2,2,3,4,2,4,5,6,4,5,6];
+S(7,'Transportar una melodía',function(b,api){
+ b.innerHTML='<p>Transportar es mover toda la música el mismo intervalo. Es muy útil para adaptar una canción a una voz. Aquí «Fray Santiago» (Frère Jacques) pasa de Do mayor a Sol mayor, una quinta arriba.</p>';
+ function st(sig,arr){return '<div class="svgbox">'+A.staff({sig:sig,gap:30,notes:arr.map(function(s){return {s:s,stem:true};})})+'</div>';}
+ b.insertAdjacentHTML('beforeend','<p class="lbl">Do mayor</p>'+st(0,FJC)+'<p class="lbl">Sol mayor</p>'+st(1,FJG));
+ var row=el('<div class="row"><button class="btn sm" id="c">▶ En Do</button><button class="btn sm" id="g">▶ En Sol</button></div>');b.appendChild(row);
+ row.querySelector('#c').onclick=function(){A.seq(mapMid(0,FJC.map(function(s){return {s:s};})),.34);};
+ row.querySelector('#g').onclick=function(){A.seq(mapMid(1,FJG.map(function(s){return {s:s};})),.34);};
+ b.insertAdjacentHTML('beforeend','<div id="qq" style="margin-top:12px"></div>');
+ quiz(b.querySelector('#qq'),api,[{q:'Al transportar de Do mayor a Sol mayor, cada nota sube…',opts:['Un tono','Una tercera','Una quinta justa','Una octava'],ans:2,why:'De Do a Sol hay una quinta justa (7 semitonos).'},{q:'Si transportas de Sol mayor a Fa mayor, la nueva armadura tiene…',opts:['1 sostenido','1 bemol','2 bemoles','Ninguna alteración'],ans:1,why:'Fa mayor tiene Si♭.'}]);});
+S(7,'Elige el acorde para acompañar',function(b,api){
+ b.innerHTML='<p>Al acompañar una melodía en <b>Do mayor</b> puedes elegir entre tres acordes: <b>I</b> (Do–Mi–Sol), <b>IV</b> (Fa–La–Do) y <b>V</b> (Sol–Si–Re). Elige el que contiene la nota que suena en la melodía.</p><div id="qq"></div>';
+ var O=['I (Do)','IV (Fa)','V (Sol)'];
+ quiz(b.querySelector('#qq'),api,[{q:'La melodía sostiene un Fa.',opts:O,ans:1,why:'Fa solo está en el acorde de IV.'},{q:'La melodía sostiene un Si.',opts:O,ans:2,why:'Si es la tercera del acorde de V y la sensible.'},{q:'La melodía sostiene un Mi.',opts:O,ans:0,why:'Mi pertenece al acorde de tónica.'}]);});
+S(7,'Evaluación final del tema',function(b,api){quiz(b,api,[
+ {q:'¿Qué armadura tiene Mi♭ mayor?',opts:['1 bemol','2 bemoles','3 bemoles','3 sostenidos'],ans:2,why:'Si♭, Mi♭ y La♭.'},
+ {q:'¿Qué grado es la sensible?',opts:['II','IV','VI','VII'],ans:3,why:'Está a un semitono de la tónica.'},
+ {q:'La función de dominante la cumple principalmente el grado…',opts:['I','II','V','VI'],ans:2,why:'El V (y el VII en algunos casos).'},
+ {q:'¿Cuál es la relativa menor de Fa♯ mayor?',opts:['re♯ menor','fa♯ menor','la♯ menor','re menor'],ans:0,why:'Es el VI grado de Fa♯ mayor.'},
+ {q:'Una melodía con 2♯ que termina en Si y usa La♯ es probablemente…',opts:['Re mayor','si menor','Sol mayor','mi menor'],ans:1,why:'El La♯ es la sensible de si menor.'},
+ {q:'¿Qué enlace funcional es una retrogradación?',opts:['T → S','S → D','D → T','D → S'],ans:3,why:'Va en sentido contrario al orden normal.'}]);});
+window.AH_LESSON={STAGES:STAGES,SHORT:SHORT,TOPICS:{1:STEPS}};
+window.AH_C={quiz:quiz,match:match,mkKb:mkKb,kbBuild:kbBuild,entry:entry,expectCheck:expectCheck,sigBuild:sigBuild,mapMid:mapMid,playAu:playAu};
+})();
+
+(function(){
+'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n)};}
+function nl(list){return list.split(' ').map(N);}
+function mids(list){return nl(list).map(function(n){return n.m;});}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:nl(list).map(function(n,i){return {s:n.s,a:n.a,open:true,lab:o.lab?o.lab[i]:undefined};})});}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function playBtn(b,label,list,dt,cls){var r=el('<div class="row"><button class="btn '+(cls||'sm')+'">▶ '+label+'</button></div>');r.firstChild.onclick=function(){A.seq(mids(list),dt||.34);};b.appendChild(r);}
+var CM='C4 D4 E4 F4 G4 A4 B4 C5',AN='A4 B4 C5 D5 E5 F5 G5 A5',AH='A4 B4 C5 D5 E5 F5 G#5 A5',AMA='A4 B4 C5 D5 E5 F#5 G#5 A5',AMD='A5 G5 F5 E5 D5 C5 B4 A4',
+CHA='C4 C#4 D4 D#4 E4 F4 F#4 G4 G#4 A4 A#4 B4 C5',CHD='C5 B4 Bb4 A4 Ab4 G4 Gb4 F4 E4 Eb4 D4 Db4 C4',WT='C4 D4 E4 F#4 G#4 A#4 C5',OCT='C4 D4 Eb4 F4 Gb4 Ab4 A4 B4 C5';
+/* ===== ETAPA 1 ===== */
+S(0,'¿Qué es una escala?',function(b,api){
+ b.innerHTML='<div class="def"><b>Escala:</b> sucesión ordenada de sonidos, ascendente o descendente, que se repite en cada octava y sigue un patrón fijo de distancias.</div><p>Cada sonido es un <b>grado</b>. La escala de Do mayor tiene siete grados distintos; el octavo repite el primero una octava más arriba.</p>'+sbox(stf(CM,{lab:['Do','Re','Mi','Fa','Sol','La','Si','Do']}))+'<div id="pl"></div><div id="qq"></div>';
+ playBtn(b.querySelector('#pl'),'Escuchar la escala',CM);
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuántos sonidos distintos tiene la escala de Do mayor dentro de una octava?',opts:['6','7','8','12'],ans:1,why:'Siete. El octavo sonido es el Do repetido una octava arriba.'},{q:'¿Qué define a una escala?',opts:['Su volumen','El patrón de distancias entre sus sonidos','El instrumento que la toca','La cantidad de compases'],ans:1,why:'El patrón de tonos y semitonos es lo que distingue una escala de otra.'}]);});
+S(0,'Tono y semitono',function(b,api){
+ b.innerHTML='<div class="def"><b>Semitono:</b> la distancia más corta del piano, de una tecla a la siguiente (con o sin tecla negra).<br><b>Tono:</b> dos semitonos.</div><p>En el teclado, entre Mi–Fa y Si–Do no hay tecla negra: son semitonos naturales.</p>';
+ var K=mkKb(b,60,72,function(m){A.play(m,1);K.flash(m,'hl');});
+ var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);
+ match(w,api,{head:'¿Tono o semitono?',cats:['Tono','Semitono'],rows:[['Do – Re',0],['Mi – Fa',1],['Sol – La',0],['Si – Do',1],['Fa♯ – Sol',1],['La♭ – Si♭',0]].map(function(x){return {l:x[0],ans:x[1]};})});});
+S(0,'Tres familias de escalas',function(b,api){
+ b.innerHTML='<div class="scroll"><table class="tbl"><tr><th>Familia</th><th>Sonidos</th><th>Idea</th></tr><tr><td>Diatónica</td><td>7</td><td>5 tonos y 2 semitonos. Es la base de la tonalidad.</td></tr><tr><td>Cromática</td><td>12</td><td>Todo son semitonos.</td></tr><tr><td>Simétrica</td><td>6 u 8</td><td>Un patrón corto que se repite igual dentro de la octava.</td></tr></table></div><div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué escala está formada solo por semitonos?',opts:['Mayor','Menor natural','Cromática','Tonos enteros'],ans:2,why:'Recorre las 12 teclas, blancas y negras.'},{q:'La escala mayor y la menor natural son…',opts:['Diatónicas','Cromáticas','Simétricas'],ans:0,why:'Tienen 7 sonidos con 5 tonos y 2 semitonos.'}]);});
+S(0,'Escucha tres escalas',function(b,api){
+ b.innerHTML='<p>Escucha tres escalas y reconoce la que avanza solo por semitonos.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál es la escala cromática?',audio:[{l:'Escala A',m:mids('C4 D4 E4 F4 G4 A4 B4 C5'),dt:.3},{l:'Escala B',m:mids(CHA),dt:.22},{l:'Escala C',m:mids(WT),dt:.3}],opts:['A','B','C'],ans:1,why:'La B tiene 12 pasos iguales de semitono y suena muy «apretada».'}]);});
+S(0,'De la escala a la tonalidad',function(b,api){
+ b.innerHTML='<div class="def">La <b>escala</b> es el material: unas notas ordenadas. La <b>tonalidad</b> añade un centro (la tónica) y una jerarquía entre los grados.</div><p>Las mismas siete notas pueden producir dos tonalidades distintas según dónde se descanse. Escucha las notas de Do mayor empezando y terminando en Do, y luego en La.</p>';
+ var K=mkKb(b,57,72,function(m){A.play(m,1);K.flash(m,'hl');});
+ var row=el('<div class="row"><button class="btn sm" id="a">▶ Desde Do</button><button class="btn sm" id="b">▶ Desde La</button></div>');b.appendChild(row);
+ row.querySelector('#a').onclick=function(){A.seq(mids(CM),.34);};
+ row.querySelector('#b').onclick=function(){A.seq(mids('A3 B3 C4 D4 E4 F4 G4 A4'),.34);};
+ b.insertAdjacentHTML('beforeend','<div id="qq" style="margin-top:12px"></div>');
+ quiz(b.querySelector('#qq'),api,[{q:'Las notas Do Re Mi Fa Sol La Si, empezando y terminando en La, forman…',opts:['Do mayor','la menor natural','la menor armónica','una escala cromática'],ans:1,why:'Es la relativa menor de Do mayor: mismas notas, distinto centro.'}]);});
+/* ===== ETAPA 2 ===== */
+S(1,'La escala mayor',function(b,api){
+ b.innerHTML='<div class="def">Patrón: <b>T T S · T T T S</b><br>Se divide en dos tetracordios iguales (T T S) separados por un tono.</div>'+sbox(stf(CM,{lab:['I','II','III','IV','V','VI','VII','I']}))+'<div class="row"><button class="btn sm" id="t1">▶ Primer tetracordio</button><button class="btn sm" id="t2">▶ Segundo tetracordio</button></div><div id="qq" style="margin-top:12px"></div>';
+ b.querySelector('#t1').onclick=function(){A.seq(mids('C4 D4 E4 F4'),.4);};
+ b.querySelector('#t2').onclick=function(){A.seq(mids('G4 A4 B4 C5'),.4);};
+ quiz(b.querySelector('#qq'),api,[{q:'¿Entre qué grados de la escala mayor hay semitonos?',opts:['I–II y V–VI','III–IV y VII–VIII','II–III y IV–V','Solo VII–VIII'],ans:1,why:'Son los dos semitonos de la escala: Mi–Fa y Si–Do en Do mayor.'}]);});
+S(1,'Las tres formas de la escala menor',function(b,api){
+ b.innerHTML='<div class="scroll"><table class="tbl"><tr><th>Forma</th><th>Patrón</th><th>Rasgo</th></tr><tr><td>Natural</td><td>T S T T S T T</td><td>Sin alteraciones sobre la armadura. La séptima queda a un tono.</td></tr><tr><td>Armónica</td><td>T S T T S 1½ S</td><td>Eleva el VII: aparece la sensible.</td></tr><tr><td>Melódica</td><td>Sube: T S T T T T S<br>Baja: la natural</td><td>Eleva VI y VII solo al subir.</td></tr></table></div>';
+ var f=[['la menor natural',AN],['la menor armónica',AH],['la menor melódica (sube)',AMA],['la menor melódica (baja)',AMD]];
+ f.forEach(function(x){b.insertAdjacentHTML('beforeend','<p class="lbl" style="margin:12px 0 0">'+x[0]+'</p>'+sbox(stf(x[1],{gap:36})));playBtn(b,'Escuchar',x[1],.3,'ghost sm');});
+ },true);
+S(1,'La segunda aumentada',function(b,api){
+ b.innerHTML='<p>En la menor armónica, subir el VII deja un salto grande entre el VI y el VII: Fa a Sol♯ son <b>3 semitonos</b> (1½ tonos). Se llama <b>segunda aumentada</b> y suena exótica. La melódica sube también el VI para evitarlo.</p>'+sbox(stf('F5 G#5',{gap:60}))+'<div id="pl"></div><div id="qq"></div>';
+ playBtn(b.querySelector('#pl'),'Escuchar Fa – Sol♯','F5 G#5',.6);
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué forma de la menor contiene una segunda aumentada?',opts:['Natural','Armónica','Melódica ascendente'],ans:1,why:'La natural no eleva el VII y la melódica también eleva el VI.'},{q:'La segunda aumentada tiene…',opts:['1 semitono','2 semitonos','3 semitonos','4 semitonos'],ans:2,why:'Es una segunda con un semitono más que la mayor.'}]);});
+S(1,'La escala cromática',function(b,api){
+ b.innerHTML='<p>Tiene 12 sonidos distintos y cada uno está a un semitono del siguiente. Por convención se escribe <b>con sostenidos al subir</b> y <b>con bemoles al bajar</b>.</p>'+sbox(stf(CHA,{gap:34}))+'<div id="p1"></div>'+sbox(stf(CHD,{gap:34}))+'<div id="p2"></div><div id="qq"></div>';
+ playBtn(b.querySelector('#p1'),'Ascendente',CHA,.2);playBtn(b.querySelector('#p2'),'Descendente',CHD,.2);
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuántos sonidos distintos tiene la escala cromática en una octava?',opts:['7','8','12','13'],ans:2,why:'Doce; el decimotercero repite el primero.'},{q:'Al descender se escriben normalmente…',opts:['Sostenidos','Bemoles'],ans:1,why:'Es la convención: sostenidos al subir, bemoles al bajar.'}]);});
+S(1,'Escalas simétricas',function(b,api){
+ b.innerHTML='<div class="def">Una escala es <b>simétrica</b> cuando su patrón de intervalos se repite igual dentro de la octava.</div><p class="lbl">Tonos enteros: T T T T T T (6 sonidos)</p>'+sbox(stf(WT,{gap:44}))+'<div id="p1"></div><p class="lbl">Octatónica: T S T S T S T S (8 sonidos)</p>'+sbox(stf(OCT,{gap:38}))+'<div id="p2"></div><div id="qq"></div>';
+ playBtn(b.querySelector('#p1'),'Tonos enteros',WT,.34);playBtn(b.querySelector('#p2'),'Octatónica',OCT,.3);
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuántos sonidos tiene la escala de tonos enteros?',opts:['5','6','7','8'],ans:1,why:'Seis, todos a un tono de distancia.'},{q:'La escala de tonos enteros suena…',opts:['Con una tónica muy marcada','Flotante, sin sensible ni tónica clara'],ans:1,why:'Al no tener semitonos, no existe una sensible que apunte a un centro.'}]);});
+/* ===== ETAPA 3 ===== */
+S(2,'Construye escalas mayores',function(b,api){
+ b.innerHTML='<p>Aplica el patrón T T S T T T S desde cada tónica.</p>';
+ kbBuild(b,api,[{f:2,sc:'M',tm:'M',txt:'Re mayor',why:'Re Mi Fa♯ Sol La Si Do♯.'},{f:-3,sc:'M',tm:'M',txt:'Mi♭ mayor',why:'Mi♭ Fa Sol La♭ Si♭ Do Re.'}]);});
+S(2,'Escribe una escala sin armadura',function(b,api){
+ b.innerHTML='<p>Sin armadura, cada alteración se escribe junto a su nota.</p>';
+ entry(b,api,[{sig:0,cols:8,txt:'Escribe <b>Re mayor</b> sin armadura, de Re4 a Re5. Pon los sostenidos que hagan falta.',why:'Fa♯ y Do♯ se escriben junto a la nota porque no hay armadura.',check:expectCheck([-1,0,1,2,3,4,5,6].map(function(s,i){return {s:s,a:[0,0,1,0,0,0,1,0][i]};}))}]);});
+S(2,'Construye escalas menores',function(b,api){
+ b.innerHTML='<p>Construye tres formas de sol menor.</p>';
+ kbBuild(b,api,[{pcs:[7,9,10,0,2,3,5],txt:'sol menor natural',why:'Sol La Si♭ Do Re Mi♭ Fa.'},{pcs:[7,9,10,0,2,3,6],txt:'sol menor armónica',why:'El Fa se eleva a Fa♯.'},{pcs:[7,9,10,0,2,4,6],txt:'sol menor melódica (ascendente)',why:'Se elevan el VI (Mi) y el VII (Fa♯).'}]);});
+S(2,'Escribe sol menor armónica',function(b,api){
+ entry(b,api,[{sig:-2,cols:8,txt:'Escribe <b>sol menor armónica</b> con su armadura (2♭), de Sol4 a Sol5.',why:'Si♭ y Mi♭ están en la armadura. El Fa♯ es una alteración accidental.',check:expectCheck([2,3,4,5,6,7,8,9].map(function(s,i){return {s:s,a:[0,0,-1,0,0,-1,1,0][i]};}))}]);});
+S(2,'Cromática y simétricas en el teclado',function(b,api){
+ b.innerHTML='<p>Construye tres escalas que empiezan en Do.</p>';
+ kbBuild(b,api,[{pcs:[0,1,2,3,4,5,6,7,8,9,10,11],n:12,txt:'la escala cromática desde Do',why:'Son las 12 teclas.'},{pcs:[0,2,4,6,8,10],n:6,txt:'tonos enteros desde Do',why:'Do Re Mi Fa♯ Sol♯ La♯.'},{pcs:[0,2,3,5,6,8,9,11],n:8,txt:'la octatónica (tono-semitono) desde Do',why:'Do Re Mi♭ Fa Sol♭ La♭ La Si.'}]);});
+/* ===== ETAPA 4 ===== */
+S(3,'Una letra para cada grado',function(b,api){
+ b.innerHTML='<div class="def"><b>Regla:</b> en una escala diatónica cada grado lleva un nombre de nota distinto (Do Re Mi Fa Sol La Si, sin repetir ni saltar ninguno).</div><p>Por eso en Sol mayor el séptimo grado es Fa♯ y no Sol♭, aunque suenen igual. La escala cromática es la excepción: repite letras (Do, Do♯, Re…).</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'En la escala de Re mayor, el tercer grado se escribe…',opts:['Sol♭','Fa♯','Mi♯'],ans:1,why:'Debe llamarse Fa porque el III de Re es la tercera letra (Re Mi Fa).'},{q:'¿Qué escala puede repetir nombres de nota?',opts:['Mayor','Menor natural','Cromática'],ans:2,why:'Tiene 12 sonidos y solo 7 letras.'}]);});
+S(3,'La menor melódica: sube y baja distinto',function(b,api){
+ b.innerHTML='<p>En la tradición clásica la menor melódica <b>sube</b> con VI y VII elevados y <b>baja</b> como la natural. En el jazz y la música moderna se suele usar la forma ascendente también al bajar.</p>'+sbox(stf(AMA,{gap:36}))+sbox(stf(AMD,{gap:36}))+'<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Al bajar, la menor melódica clásica…',opts:['Mantiene VI y VII elevados','Vuelve a la menor natural'],ans:1,why:'Ya no necesita la sensible para llegar a la tónica desde arriba.'},{q:'¿Para qué se elevan VI y VII al subir?',opts:['Para tocar más fuerte','Para evitar la segunda aumentada y tener sensible'],ans:1,why:'Así la subida es por grados conjuntos y llega a la tónica por semitono.'}]);});
+S(3,'Escalas teóricas y enarmonía',function(b,api){
+ b.innerHTML='<p>Algunas escalas necesitarían dobles alteraciones. Sol♯ mayor, por ejemplo, requiere un Fa con doble sostenido. En la práctica se escriben con su enarmónica: La♭ mayor.</p><p>Una escala se escribe con la tonalidad que tenga <b>menos alteraciones</b>, salvo que el contexto armónico pida otra.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cómo se prefiere escribir la escala de Sol♯ mayor?',opts:['Con 8 sostenidos','Como La♭ mayor','No se puede escribir'],ans:1,why:'Suena igual y tiene 4 bemoles en vez de 8 alteraciones.'}]);});
+/* ===== ETAPA 5 ===== */
+S(4,'Mozart: Rondó alla turca',function(b,api){
+ b.innerHTML='<p>El inicio del Rondó alla turca (Mozart) está en la menor y usa la escala armónica. Fíjate en el Sol♯ (VII elevado).</p>'+sbox(stf('B4 A4 G#4 A4 C5',{gap:50,lab:['Si','La','Sol♯','La','Do']}))+'<div id="pl"></div><p class="lbl">Fragmento inicial con ritmo simplificado.</p>';
+ playBtn(b.querySelector('#pl'),'Escuchar',"B4 A4 G#4 A4 C5",.3);},true);
+S(4,'Dónde se oyen estas escalas',function(b,api){
+ b.innerHTML='<div class="scroll"><table class="tbl"><tr><th>Escala</th><th>Dónde se oye</th></tr><tr><td>Cromática</td><td>Pasajes veloces como «El vuelo del moscardón» de Rimski-Kórsakov.</td></tr><tr><td>Tonos enteros</td><td>Debussy, como en «Voiles».</td></tr><tr><td>Octatónica</td><td>Rimski-Kórsakov, Stravinski y Bartók.</td></tr></table></div><p style="margin-top:10px">Escúchalas desde Do:</p>';
+ playBtn(b.querySelector('.scroll').parentNode,'Cromática',CHA,.18,'ghost sm');playBtn(b,'Tonos enteros',WT,.34,'ghost sm');playBtn(b,'Octatónica',OCT,.3,'ghost sm');},true);
+S(4,'Oído: formas de la menor',function(b,api){
+ b.innerHTML='<p>Escucha las tres formas de la menor y encuentra la que tiene un salto raro entre el VI y el VII.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué forma tiene la segunda aumentada?',audio:[{l:'Forma 1',m:mids(AN),dt:.32},{l:'Forma 2',m:mids(AH),dt:.32},{l:'Forma 3',m:mids(AMA),dt:.32}],opts:['1','2','3'],ans:1,why:'La forma 2 es la armónica: Fa a Sol♯ suena como un salto «oriental».'}]);});
+S(4,'Oído: escalas simétricas',function(b,api){
+ b.innerHTML='<p>Una de estas dos escalas no te da sensación de llegar a casa.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál es la escala de tonos enteros?',audio:[{l:'Escala A',m:mids(CM),dt:.32},{l:'Escala B',m:mids(WT),dt:.32}],opts:['A','B'],ans:1,why:'La B flota: sin semitonos no hay sensible que apunte a la tónica.'}]);});
+/* ===== ETAPA 6 ===== */
+S(5,'Análisis: Rondó alla turca',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{pre:stf('B4 A4 G#4 A4 C5',{gap:50,lab:['Si','La','Sol♯','La','Do']}),q:'¿En qué tonalidad está el fragmento?',opts:['Do mayor','la menor','mi menor','La mayor'],ans:1,why:'Gira alrededor de La y Do es su tercera menor.'},{q:'El Sol♯ indica que se usa…',opts:['La menor natural','La menor armónica','La cromática'],ans:1,why:'La natural tendría Sol♮. El Sol♯ es la sensible.'},{q:'¿Qué grado es el Sol♯ en la menor?',opts:['V','VI','VII','II'],ans:2,why:'La es I, Si II, Do III, Re IV, Mi V, Fa VI, Sol VII.'}]);});
+S(5,'Análisis: ¿qué escala es?',function(b,api){
+ b.innerHTML='<p>Identifica cada serie de notas.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[
+  {pre:stf('C5 D5 Eb5 F5 G5 Ab5 B5 C6',{gap:36}),q:'Serie 1',opts:['do menor natural','do menor armónica','do menor melódica','Mi♭ mayor'],ans:1,why:'Tiene La♭ (VI menor) y Si♮ (VII elevado).'},
+  {pre:stf('D5 E5 F5 G5 A5 B5 C#6 D6',{gap:36}),q:'Serie 2',opts:['re menor natural','re menor armónica','re menor melódica ascendente','Re mayor'],ans:2,why:'Tercera menor (Fa), pero VI y VII elevados: Si♮ y Do♯.'},
+  {pre:stf('C5 D5 E5 F#5 G#5 A#5 C6',{gap:40}),q:'Serie 3',opts:['Do mayor','tonos enteros','octatónica','cromática'],ans:1,why:'Seis sonidos separados por tonos.'},
+  {pre:stf(CHA,{gap:32}),q:'Serie 4',opts:['Cromática','Tonos enteros','Octatónica'],ans:0,why:'Todos los pasos son de semitono.'}]);});
+/* ===== ETAPA 7 ===== */
+S(6,'Escribe re menor melódica',function(b,api){
+ entry(b,api,[{sig:-1,cols:8,txt:'Escribe <b>re menor melódica ascendente</b> con su armadura (1♭), de Re4 a Re5. Recuerda que la armadura trae Si♭, pero aquí el VI va elevado.',why:'Si♮ (becuadro) y Do♯ elevan el VI y el VII.',check:expectCheck([-1,0,1,2,3,4,5,6].map(function(s,i){return {s:s,a:[0,0,0,0,0,0,1,0][i]};}))}]);});
+S(6,'Escribe la escala cromática',function(b,api){
+ entry(b,api,[{sig:0,cols:8,txt:'Escribe los <b>8 primeros sonidos</b> de la escala cromática ascendente desde Do4 (con sostenidos): Do Do♯ Re Re♯ Mi Fa Fa♯ Sol.',why:'Cada nota sube un semitono. Al subir se usan sostenidos.',check:expectCheck([[-2,0],[-2,1],[-1,0],[-1,1],[0,0],[1,0],[1,1],[2,0]].map(function(x){return {s:x[0],a:x[1]};}))}]);});
+S(6,'Escribe tonos enteros',function(b,api){
+ entry(b,api,[{sig:0,cols:7,txt:'Escribe la escala de <b>tonos enteros desde Do5</b> (Do Re Mi Fa♯ Sol♯ La♯ Do).',why:'Todas las distancias son de un tono. El último Do va una octava arriba, en Do6.',check:expectCheck([[5,0],[6,0],[7,0],[8,1],[9,1],[10,1],[12,0]].map(function(x){return {s:x[0],a:x[1]};}))}]);});
+S(6,'Compón con la menor armónica',function(b,api){
+ b.innerHTML='<p>Escribe un motivo de 5 notas en <b>la menor</b>. Reglas: usa notas de la escala armónica, incluye el <b>Sol♯</b> y termina en <b>La</b>.</p>';
+ var ok=[9,11,0,2,4,5,8];
+ entry(b,api,[{sig:0,cols:5,txt:'Escribe tu motivo.',why:'Tu motivo usa la sensible y cierra en la tónica. Escúchalo con el botón.',check:function(ns){if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var bad=[],cls=[],ok=true,hasG=false;
+  ns.forEach(function(n,i){var pc=A.midOf(A.stepNote(n.s,n.a))%12;if([9,11,0,2,4,5,8].indexOf(pc)<0){cls[i]='bad';ok=false;bad.push('la nota '+(i+1)+' no es de la menor armónica');}else cls[i]='';if(pc===8)hasG=true;});
+  if(!hasG){ok=false;bad.push('falta el Sol♯');}
+  if(A.midOf(A.stepNote(ns[4].s,ns[4].a))%12!==9){ok=false;cls[4]='bad';bad.push('termina en La');}
+  if(ok)cls=ns.map(function(){return 'ok';});return {ok:ok,cls:cls,msg:'Revisa: '+bad.join('; ')+'.'};}}]);});
+/* ===== ETAPA 8 ===== */
+S(7,'¿Qué escala uso?',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'En una pieza en la menor, aparece un Sol♯ antes de volver a La. ¿Qué forma se usa?',opts:['Natural','Armónica o melódica'],ans:1,why:'El Sol♯ es la sensible.'},{q:'Buscas un color flotante, sin tónica clara, para una escena onírica.',opts:['Mayor','Tonos enteros','Menor natural'],ans:1,why:'Debussy la usó con ese fin.'},{q:'Para calentar los dedos con todas las teclas seguidas…',opts:['Cromática','Pentatónica','Octatónica'],ans:0,why:'Recorre las 12 teclas sin saltos.'}]);});
+S(7,'Digitación de la escala de Do mayor',function(b,api){
+ b.innerHTML='<p>En piano, la digitación permite recorrer la escala sin interrupciones: el pulgar pasa por debajo después del tercer dedo.</p><div class="scroll"><table class="tbl"><tr><th></th><th>Do</th><th>Re</th><th>Mi</th><th>Fa</th><th>Sol</th><th>La</th><th>Si</th><th>Do</th></tr><tr><td>Mano derecha</td><td>1</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr><tr><td>Mano izquierda</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>3</td><td>2</td><td>1</td></tr></table></div><p class="lbl" style="margin:8px 0 14px">Práctica sugerida: lenta, con metrónomo, a una y luego a dos octavas.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'En Do mayor con la mano derecha, ¿qué dedo toca el Fa?',opts:['El 1 (pulgar)','El 3','El 4','El 5'],ans:0,why:'Después de Mi (dedo 3) el pulgar pasa por debajo para tocar Fa.'}]);});
+S(7,'Evaluación final del tema',function(b,api){quiz(b,api,[
+ {q:'Patrón de la escala mayor:',opts:['T S T T S T T','T T S T T T S','T T T S T T S'],ans:1,why:'Los semitonos caen entre III–IV y VII–VIII.'},
+ {q:'¿Qué forma de la menor tiene segunda aumentada?',opts:['Natural','Armónica','Melódica ascendente'],ans:1,why:'Entre VI y VII elevado.'},
+ {q:'¿Cuántos sonidos tiene la escala de tonos enteros?',opts:['5','6','7','12'],ans:1,why:'Seis sonidos separados por tonos.'},
+ {q:'Las mismas notas de Do mayor empezando en La forman…',opts:['La menor natural','La mayor','La cromática'],ans:0,why:'Es la relativa menor.'},
+ {q:'La escala cromática ascendente se escribe con…',opts:['Sostenidos','Bemoles'],ans:0,why:'Sostenidos al subir y bemoles al bajar.'},
+ {q:'¿Qué escala simétrica alterna tono y semitono?',opts:['Tonos enteros','Octatónica','Cromática'],ans:1,why:'T S T S T S T S.'}]);});
+window.AH_LESSON.TOPICS[2]=STEPS;
+})();
+
+(function(){
+'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n)};}
+function nl(list){return list.split(' ').map(N);}
+function mids(list){return nl(list).map(function(n){return n.m;});}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:nl(list).map(function(n,i){return {s:n.s,a:n.a,open:true,lab:o.lab?o.lab[i]:undefined};})});}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function playBtn(b,label,list,dt,cls){var r=el('<div class="row"><button class="btn '+(cls||'sm')+'">▶ '+label+'</button></div>');r.firstChild.onclick=function(){A.seq(mids(list),dt||.34);};b.appendChild(r);}
+function ch(b,label,arr,dt){var r=el('<div class="row"><button class="btn ghost sm">▶ '+label+'</button></div>');r.firstChild.onclick=function(){A.chords(arr,dt||900);};b.appendChild(r);}
+var MODES=[['Jónico','C4 D4 E4 F4 G4 A4 B4 C5'],['Dórico','C4 D4 Eb4 F4 G4 A4 Bb4 C5'],['Frigio','C4 Db4 Eb4 F4 G4 Ab4 Bb4 C5'],['Lidio','C4 D4 E4 F#4 G4 A4 B4 C5'],['Mixolidio','C4 D4 E4 F4 G4 A4 Bb4 C5'],['Eolio','C4 D4 Eb4 F4 G4 Ab4 Bb4 C5'],['Locrio','C4 Db4 Eb4 F4 Gb4 Ab4 Bb4 C5']];
+var WHITES=[60,62,64,65,67,69,71,72,74,76,77,79,81,83];
+var WN=['Do','Re','Mi','Fa','Sol','La','Si'];
+var ML=[['Menor melódica','C4 D4 Eb4 F4 G4 A4 B4 C5'],['Dórico ♭2','D4 Eb4 F4 G4 A4 B4 C5 D5'],['Lidio aumentado','Eb4 F4 G4 A4 B4 C5 D5 Eb5'],['Lidio dominante','F4 G4 A4 B4 C5 D5 Eb5 F5'],['Mixolidio ♭6','G4 A4 B4 C5 D5 Eb5 F5 G5'],['Locrio ♮2','A4 B4 C5 D5 Eb5 F5 G5 A5'],['Alterado (superlocrio)','B4 C5 D5 Eb5 F5 G5 A5 B5']];
+var HM=[['Menor armónica','A4 B4 C5 D5 E5 F5 G#5 A5'],['Locrio ♮6','B4 C5 D5 E5 F5 G#5 A5 B5'],['Jónico ♯5','C4 D4 E4 F4 G#4 A4 B4 C5'],['Dórico ♯4','D4 E4 F4 G#4 A4 B4 C5 D5'],['Frigio dominante','E4 F4 G#4 A4 B4 C5 D5 E5'],['Lidio ♯2','F4 G#4 A4 B4 C5 D5 E5 F5'],['Superlocrio ♭♭7','G#4 A4 B4 C5 D5 E5 F5 G#5']];
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+/* ===== ETAPA 1 ===== */
+S(0,'¿Qué es un modo?',function(b,api){
+ b.innerHTML='<div class="def"><b>Modo:</b> escala diatónica que se obtiene al tomar otra nota como centro. Cada modo tiene su propio orden de tonos y semitonos, y por eso su propio color.</div><p>Las notas de Do mayor son Do Re Mi Fa Sol La Si. Si en lugar de empezar en Do empiezas en Re, y haces que Re sea el punto de reposo, aparece otra escala con las mismas notas: el modo <b>dórico</b>.</p><div id="r1"></div><div id="r2"></div><div id="qq" style="margin-top:12px"></div>';
+ playBtn(b.querySelector('#r1'),'Do a Do (jónico)','C4 D4 E4 F4 G4 A4 B4 C5',.34);playBtn(b.querySelector('#r2'),'Re a Re (dórico)','D4 E4 F4 G4 A4 B4 C5 D5',.34);
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué distingue a un modo de otro de la misma familia?',opts:['Las notas que usa','El orden de tonos y semitonos','El instrumento','El compás'],ans:1,why:'Usan las mismas notas, pero el orden de tonos y semitonos cambia según la nota de partida.'}]);});
+S(0,'Siete modos, siete puntos de partida',function(b,api){
+ b.innerHTML='<p>Sobre las teclas blancas aparecen siete modos, uno por cada nota de partida. Pulsa cada botón y escucha. Prueba 4 para continuar.</p>';
+ var names=['Jónico','Dórico','Frigio','Lidio','Mixolidio','Eolio','Locrio'],seen={},K=mkKb(b,60,83,function(m){A.play(m,1);});
+ var row=el('<div class="row"></div>');b.appendChild(row);
+ var info=el('<div class="info">Elige un modo.</div>');b.appendChild(info);
+ names.forEach(function(n,k){var bt=el('<button class="btn ghost sm">'+WN[k]+' '+n.toLowerCase()+'</button>');
+  bt.onclick=function(){var ms=WHITES.slice(k,k+8);A.seq(ms,.34,function(i){K.mk[ms[i]]='hl';K.draw();setTimeout(function(){delete K.mk[ms[i]];K.draw();},300);});
+   info.innerHTML='<b style="color:#fff">'+WN[k]+' '+n.toLowerCase()+'</b>: grado '+(k+1)+' de Do mayor.';seen[k]=1;if(Object.keys(seen).length>=4)api.done();};row.appendChild(bt);});});
+S(0,'Origen de los nombres',function(b,api){
+ b.innerHTML='<p>Los nombres vienen de la teoría musical medieval, que los tomó de la Grecia antigua, aunque no equivalen a las escalas griegas originales. Dos de ellos se volvieron muy familiares:</p>'+table([['Jónico','Escala mayor'],['Eolio','Escala menor natural']],['Modo','Equivale a'])+'<div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué modo coincide con la escala mayor?',opts:['Dórico','Jónico','Lidio','Eolio'],ans:1,why:'El jónico es el modo del I grado.'},{q:'¿Qué modo coincide con la menor natural?',opts:['Frigio','Eolio','Locrio','Mixolidio'],ans:1,why:'El eolio es el modo del VI grado.'}]);});
+S(0,'Misma tónica, distinto color',function(b,api){
+ b.innerHTML='<p>Escucha dos escalas que empiezan en Do. Fíjate en la tercera.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál tiene la tercera menor?',audio:[{l:'Escala A',m:mids(MODES[0][1]),dt:.32},{l:'Escala B',m:mids(MODES[1][1]),dt:.32}],opts:['A','B'],ans:1,why:'La B es Do dórico: Do Re Mi♭ Fa Sol La Si♭ Do. La A es Do mayor.'}]);});
+S(0,'Comprueba lo aprendido',function(b,api){quiz(b,api,[
+ {q:'Re dórico y Do jónico usan…',opts:['Las mismas notas','Notas distintas','Solo notas negras'],ans:0,why:'Re dórico es el modo del II grado de Do mayor.'},
+ {q:'¿Cuántos modos diatónicos hay en una escala de siete notas?',opts:['5','6','7','12'],ans:2,why:'Uno por cada grado.'},
+ {q:'¿Qué hace que cada modo suene distinto?',opts:['El volumen','El orden de tonos y semitonos','La armadura'],ans:1,why:'Cambia la posición de los semitonos respecto a la tónica.'}]);});
+/* ===== ETAPA 2 ===== */
+S(1,'Modos mayores, menores y disminuido',function(b,api){
+ b.innerHTML='<p>Se pueden agrupar según la tercera y la quinta sobre la tónica.</p>'+table([['Mayores','Jónico, lidio, mixolidio','Tercera mayor'],['Menores','Dórico, eolio, frigio','Tercera menor'],['Disminuido','Locrio','Tercera menor y quinta disminuida']],['Tipo','Modos','Rasgo'])+'<div style="margin-top:14px"></div>';
+ var w=el('<div></div>');b.appendChild(w);
+ match(w,api,{head:'Clasifica cada modo:',cats:['Mayor','Menor','Disminuido'],rows:[['Jónico',0],['Dórico',1],['Frigio',1],['Lidio',0],['Mixolidio',0],['Eolio',1],['Locrio',2]].map(function(x){return {l:x[0],ans:x[1]};})});});
+S(1,'De lo más brillante a lo más oscuro',function(b,api){
+ b.innerHTML='<p>Si todos empiezan en Do, cada modo baja una nota más respecto al anterior:</p>'+table([['Lidio','♯4'],['Jónico','—'],['Mixolidio','♭7'],['Dórico','♭3 ♭7'],['Eolio','♭3 ♭6 ♭7'],['Frigio','♭2 ♭3 ♭6 ♭7'],['Locrio','♭2 ♭3 ♭5 ♭6 ♭7']],['Modo (de más a menos brillante)','Alteraciones sobre la escala mayor'])+'<div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál es el modo más brillante?',opts:['Jónico','Lidio','Locrio','Mixolidio'],ans:1,why:'Es el único con una nota elevada, el ♯4.'},{q:'¿Cuál es el más oscuro?',opts:['Eolio','Frigio','Locrio','Dórico'],ans:2,why:'Tiene cinco notas bajadas, entre ellas la quinta.'}]);});
+S(1,'La nota característica',function(b,api){
+ b.innerHTML='<p>Cada modo se reconoce por una nota que lo distingue de sus vecinos.</p>'+table([['Jónico','7ª mayor (sensible)'],['Dórico','6ª mayor sobre tercera menor'],['Frigio','2ª menor'],['Lidio','4ª aumentada'],['Mixolidio','7ª menor sobre tercera mayor'],['Eolio','6ª menor'],['Locrio','5ª disminuida']],['Modo','Característica'])+'<div style="margin-top:14px"></div>';
+ var w=el('<div></div>');b.appendChild(w);
+ match(w,api,{head:'¿Qué intervalo caracteriza a cada modo?',cats:['2ª menor','4ª aumentada','6ª mayor','7ª menor','5ª disminuida'],rows:[['Frigio',0],['Lidio',1],['Dórico',2],['Mixolidio',3],['Locrio',4]].map(function(x){return {l:x[0],ans:x[1]};})});});
+S(1,'Modos de la escala menor melódica',function(b,api){
+ b.innerHTML='<p>La menor melódica ascendente (T S T T T T S) también genera siete modos. Se usan mucho en el jazz. Aquí cada uno empieza en la nota que lo hace modo de la menor melódica de Do.</p><div id="lst"></div><div id="qq" style="margin-top:14px"></div>';
+ var l=b.querySelector('#lst');ML.forEach(function(m,i){l.insertAdjacentHTML('beforeend','<div class="mrow"><span class="ml" style="min-width:11em">'+(i+1)+'. '+m[0]+'</span></div>');var bt=el('<button class="btn ghost sm">▶ Escuchar</button>');bt.onclick=function(){A.seq(mids(m[1]),.3);};l.lastChild.appendChild(bt);});
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué escala madre tiene el lidio dominante?',opts:['Mayor','Menor melódica','Menor armónica'],ans:1,why:'Es el IV modo de la menor melódica.'},{q:'El lidio dominante combina…',opts:['♯4 y ♭7','♭2 y ♭3','♯5 y ♯4','♭5 y ♭6'],ans:0,why:'Es como un mixolidio con la cuarta elevada.'}]);});
+S(1,'Modos de la escala menor armónica',function(b,api){
+ b.innerHTML='<p>La menor armónica (T S T T S 1½ S) genera sus propios siete modos. El quinto, el <b>frigio dominante</b>, es el modo típico de la música flamenca.</p><div id="lst"></div><div id="qq" style="margin-top:14px"></div>';
+ var l=b.querySelector('#lst');HM.forEach(function(m,i){l.insertAdjacentHTML('beforeend','<div class="mrow"><span class="ml" style="min-width:11em">'+(i+1)+'. '+m[0]+'</span></div>');var bt=el('<button class="btn ghost sm">▶ Escuchar</button>');bt.onclick=function(){A.seq(mids(m[1]),.3);};l.lastChild.appendChild(bt);});
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué grado de la menor armónica origina el frigio dominante?',opts:['II','III','V','VII'],ans:2,why:'Es el V modo. Por ejemplo, Mi frigio dominante sale de la menor armónica de La.'},{q:'El frigio dominante tiene…',opts:['2ª menor y tercera mayor','2ª mayor y tercera menor','4ª aumentada y 6ª mayor'],ans:0,why:'Mi Fa Sol♯ La…: Fa es 2ª menor y Sol♯ es tercera mayor.'}]);});
+/* ===== ETAPA 3 ===== */
+S(2,'¿De qué escala mayor viene?',function(b,api){
+ b.innerHTML='<div class="def"><b>Procedimiento por rotación:</b> un modo tiene las notas de la escala mayor «madre» en la que ocupa cierto grado. Si buscas el modo II de Do mayor obtienes Re dórico; si quieres saber la madre de un modo, cuenta hacia atrás.</div><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Re dórico es un modo de la escala mayor de…',opts:['Re mayor','Do mayor','Sol mayor','Fa mayor'],ans:1,why:'Re es el II grado de Do mayor.'},{q:'Mi frigio es un modo de…',opts:['Do mayor','Mi mayor','Sol mayor','La mayor'],ans:0,why:'Mi es el III grado de Do mayor.'},{q:'Sol lidio es un modo de…',opts:['Re mayor','Do mayor','Sol mayor','Fa mayor'],ans:0,why:'Sol es el IV grado de Re mayor.'},{q:'La♭ mixolidio es un modo de…',opts:['La♭ mayor','Re♭ mayor','Mi♭ mayor','Si♭ mayor'],ans:1,why:'La♭ es el V grado de Re♭ mayor.'},{q:'Si♭ dórico es un modo de…',opts:['La♭ mayor','Si♭ mayor','Fa mayor','Mi♭ mayor'],ans:0,why:'Si♭ es el II grado de La♭ mayor.'}]);});
+S(2,'Construye modos con la misma tónica',function(b,api){
+ b.innerHTML='<div class="def"><b>Procedimiento paralelo:</b> toma la escala mayor de la misma tónica y altera los grados que cambian. Por ejemplo, el dórico es la escala mayor con ♭3 y ♭7.</div>';
+ kbBuild(b,api,[{pcs:[0,2,3,5,7,9,10],txt:'Do dórico',why:'Do Re Mi♭ Fa Sol La Si♭.'},{pcs:[0,2,4,6,7,9,11],txt:'Do lidio',why:'Do Re Mi Fa♯ Sol La Si.'},{pcs:[3,5,7,8,10,0,1],txt:'Mi♭ mixolidio',why:'Mi♭ Fa Sol La♭ Si♭ Do Re♭.'},{pcs:[2,3,5,7,9,10,0],txt:'Re frigio',why:'Re Mi♭ Fa Sol La Si♭ Do.'}]);});
+S(2,'Construye modos de la melódica y la armónica',function(b,api){
+ b.innerHTML='<p>Aplica lo mismo a modos más coloridos.</p>';
+ kbBuild(b,api,[{pcs:[0,2,4,6,7,9,10],txt:'Do lidio dominante',why:'Do Re Mi Fa♯ Sol La Si♭.'},{pcs:[4,5,8,9,11,0,2],txt:'Mi frigio dominante',why:'Mi Fa Sol♯ La Si Do Re.'},{pcs:[0,1,3,4,6,8,10],txt:'Do alterado (superlocrio)',why:'Do Re♭ Mi♭ Fa♭ Sol♭ La♭ Si♭. Fa♭ suena como Mi.'}]);});
+/* ===== ETAPA 4 ===== */
+S(3,'Armadura y modos',function(b,api){
+ b.innerHTML='<div class="def"><b>Regla:</b> un modo se escribe con la armadura de su escala mayor madre. La armadura no dice cuál es la tónica: hay que buscarla en la música.</div><p>Método: 1) lee la armadura y encuentra la mayor madre; 2) busca la nota donde la música descansa; 3) calcula el grado de la madre que es esa nota.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[
+  {pre:A.staff({sig:1,notes:[],w:240}),q:'Armadura de 1♯; la melodía descansa en Re.',opts:['Re dórico','Re mixolidio','Re eolio','Re lidio'],ans:1,why:'1♯ es Sol mayor; Re es su V grado: mixolidio.'},
+  {pre:A.staff({sig:-2,notes:[],w:240}),q:'Armadura de 2♭; la melodía descansa en Do.',opts:['Do dórico','Do eolio','Do frigio','Do jónico'],ans:0,why:'2♭ es Si♭ mayor; Do es su II grado: dórico.'},
+  {pre:A.staff({sig:0,notes:[],w:240}),q:'Sin armadura; la melodía descansa en Mi.',opts:['Mi dórico','Mi eolio','Mi frigio','Mi lidio'],ans:2,why:'Sin alteraciones es Do mayor; Mi es su III grado: frigio.'}]);});
+S(3,'Fórmulas modales',function(b,api){
+ b.innerHTML='<p>Los modos se describen con su fórmula respecto a la escala mayor de la misma tónica.</p>'+table([['Jónico','1 2 3 4 5 6 7'],['Dórico','1 2 ♭3 4 5 6 ♭7'],['Frigio','1 ♭2 ♭3 4 5 ♭6 ♭7'],['Lidio','1 2 3 ♯4 5 6 7'],['Mixolidio','1 2 3 4 5 6 ♭7'],['Eolio','1 2 ♭3 4 5 ♭6 ♭7'],['Locrio','1 ♭2 ♭3 4 ♭5 ♭6 ♭7']],['Modo','Fórmula'])+'<div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Fórmula 1 2 ♭3 4 5 6 ♭7',opts:['Eolio','Dórico','Frigio','Mixolidio'],ans:1,why:'Tiene la 6ª mayor, que lo distingue del eolio.'},{q:'Fórmula 1 2 3 ♯4 5 6 7',opts:['Lidio','Jónico','Mixolidio'],ans:0,why:'El ♯4 es su rasgo.'},{q:'Fórmula 1 ♭2 ♭3 4 5 ♭6 ♭7',opts:['Locrio','Eolio','Frigio'],ans:2,why:'Tiene quinta justa, no disminuida.'}]);});
+S(3,'Una excepción: el locrio',function(b,api){
+ b.innerHTML='<p>El locrio casi no se usa como centro tonal. Su quinta es disminuida, así que el acorde de tónica (Si–Re–Fa en Si locrio) es disminuido e inestable. No suena a «casa».</p><p>Funciona sobre el acorde semidisminuido, por ejemplo en un acorde vii de Do mayor.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Por qué es raro usar el locrio como tonalidad?',opts:['Tiene demasiadas notas','Su acorde de tónica es disminuido','No existe en el piano'],ans:1,why:'La quinta disminuida impide una tónica estable.'}]);});
+/* ===== ETAPA 5 ===== */
+S(4,'Dónde se oyen los modos',function(b,api){
+ b.innerHTML='<p>Ejemplos habituales (referencias, sin notación):</p>'+table([['Dórico','Folk inglés como «Scarborough Fair»; el jazz modal de «So What» (Miles Davis)'],['Frigio','Flamenco y la cadencia andaluza'],['Lidio','Temas de aire soñador o luminoso, como el de «Los Simpson»'],['Mixolidio','Música celta y rock con la progresión I–♭VII'],['Eolio','Gran parte de la música menor popular'],['Locrio','Casi solo como color sobre acordes semidisminuidos']],['Modo','Ejemplos'])+'<p class="lbl" style="margin-top:8px">Estas asociaciones son orientativas: una misma pieza puede analizarse de varias maneras.</p>';},true);
+S(4,'Cadencias modales',function(b,api){
+ b.innerHTML='<p>Los modos se identifican por sus progresiones características. Escucha tres:</p>'+'<p class="lbl" style="margin:10px 0 0">Cadencia andaluza (frigio): la – Sol – Fa – Mi</p><div id="p1"></div><p class="lbl" style="margin:10px 0 0">I – ♭VII – IV – I (mixolidio en Sol): Sol – Fa – Do – Sol</p><div id="p2"></div><p class="lbl" style="margin:10px 0 0">i – IV (dórico en Re): re – Sol</p><div id="p3"></div>';
+ ch(b.querySelector('#p1'),'Escuchar',[[45,57,60,64],[43,55,59,62],[41,53,57,60],[40,52,56,59]]);
+ ch(b.querySelector('#p2'),'Escuchar',[[43,55,59,62],[41,53,57,60],[48,55,60,64],[43,55,59,62]]);
+ ch(b.querySelector('#p3'),'Escuchar',[[50,57,62,65],[43,55,59,62],[50,57,62,65],[43,55,59,62]]);},true);
+S(4,'Los siete modos desde Do',function(b,api){
+ b.innerHTML='<p>Elige un modo y compáralo con la escala mayor.</p><div class="row" id="ms"></div><div class="svgbox" id="sf"></div><div class="info" id="in"></div>';
+ var ms=b.querySelector('#ms'),sf=b.querySelector('#sf'),inf=b.querySelector('#in');
+ MODES.forEach(function(m,k){var bt=el('<button class="btn ghost sm">'+m[0]+'</button>');bt.onclick=function(){sf.innerHTML=stf(m[1],{lab:['1','2','3','4','5','6','7','8'],gap:42});A.seq(mids(m[1]),.32);inf.innerHTML='<b style="color:#fff">Do '+m[0].toLowerCase()+'</b>';};ms.appendChild(bt);});
+ ms.firstChild.onclick();},true);
+S(4,'Oído: reconoce el modo',function(b,api){
+ b.innerHTML='<p>Escucha cada pareja y decide.</p><div id="qq"></div>';
+ var J=mids(MODES[0][1]);
+ quiz(b.querySelector('#qq'),api,[
+  {q:'¿Cuál es el lidio (con la cuarta aumentada)?',audio:[{l:'A',m:J,dt:.32},{l:'B',m:mids(MODES[3][1]),dt:.32}],opts:['A','B'],ans:1,why:'La B tiene Fa♯ y suena más brillante.'},
+  {q:'¿Cuál es el mixolidio (séptima menor)?',audio:[{l:'A',m:mids(MODES[4][1]),dt:.32},{l:'B',m:J,dt:.32}],opts:['A','B'],ans:0,why:'La A termina con Si♭ antes del Do: suena a dominante.'},
+  {q:'¿Cuál es el dórico (sexta mayor)?',audio:[{l:'A',m:mids(MODES[5][1]),dt:.32},{l:'B',m:mids(MODES[1][1]),dt:.32}],opts:['A','B'],ans:1,why:'La B tiene La natural; la A es eolio con La♭.'}]);});
+/* ===== ETAPA 6 ===== */
+S(5,'Análisis: ¿qué modo es?',function(b,api){
+ b.innerHTML='<p>Todas las series están escritas sin armadura. Identifica el modo.</p><div id="qq"></div>';
+ function q(list,txt,opts,ans,why){return {pre:stf(list,{gap:36}),q:txt,opts:opts,ans:ans,why:why};}
+ var O=['dórico','frigio','lidio','mixolidio','eolio','locrio'];
+ quiz(b.querySelector('#qq'),api,[
+  q('D4 E4 F4 G4 A4 B4 C5 D5','Serie 1 (empieza en Re)',['Re jónico','Re dórico','Re eolio','Re frigio'],1,'Sin alteraciones empezando en Re: II grado de Do mayor.'),
+  q('E4 F4 G4 A4 B4 C5 D5 E5','Serie 2 (empieza en Mi)',['Mi eolio','Mi dórico','Mi frigio','Mi locrio'],2,'Mi–Fa es semitono: segunda menor, rasgo del frigio.'),
+  q('F4 G4 A4 B4 C5 D5 E5 F5','Serie 3 (empieza en Fa)',['Fa lidio','Fa jónico','Fa mixolidio','Fa dórico'],0,'Con Si natural es el IV grado de Do mayor: lidio.'),
+  q('G4 A4 B4 C5 D5 E5 F5 G5','Serie 4 (empieza en Sol)',['Sol jónico','Sol mixolidio','Sol dórico','Sol lidio'],1,'El Fa natural es la séptima menor: mixolidio.'),
+  q('B4 C5 D5 E5 F5 G5 A5 B5','Serie 5 (empieza en Si)',['Si frigio','Si eolio','Si locrio','Si dórico'],2,'Si–Fa es una quinta disminuida: locrio.')]);});
+S(5,'Análisis: modos de la melódica y la armónica',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ function q(list,txt,opts,ans,why){return {pre:stf(list,{gap:36}),q:txt,opts:opts,ans:ans,why:why};}
+ quiz(b.querySelector('#qq'),api,[
+  q('C4 D4 E4 F#4 G4 A4 Bb4 C5','Serie 1',['Do lidio','Do lidio dominante','Do mixolidio','Do jónico ♯5'],1,'Tiene ♯4 y ♭7.'),
+  q('E4 F4 G#4 A4 B4 C5 D5 E5','Serie 2',['Mi frigio','Mi frigio dominante','Mi dórico','Mi mixolidio'],1,'2ª menor y tercera mayor (Sol♯).'),
+  q('D4 Eb4 F4 G4 A4 B4 C5 D5','Serie 3',['Re frigio','Re dórico ♭2','Re eolio','Re locrio ♮2'],1,'Es dórico con la segunda bajada: Mi♭.')]);});
+S(5,'Análisis: el modo de una progresión',function(b,api){
+ b.innerHTML='<p>Escucha la progresión y decide qué modo sugiere.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[
+  {q:'Sol – Fa – Sol (I – ♭VII – I)',audio:[{l:'Escuchar',mode:'chords',m:[[43,55,59,62],[41,53,57,60],[43,55,59,62]],dt:900}],opts:['Mixolidio','Lidio','Frigio'],ans:0,why:'El ♭VII mayor es típico del mixolidio.'},
+  {q:'la – Sol – Fa – Mi',audio:[{l:'Escuchar',mode:'chords',m:[[45,57,60,64],[43,55,59,62],[41,53,57,60],[40,52,56,59]],dt:900}],opts:['Dórico','Frigio (andaluza)','Lidio'],ans:1,why:'El descenso con Mi mayor es la cadencia andaluza.'},
+  {q:'Do – Re (I – II mayor)',audio:[{l:'Escuchar',mode:'chords',m:[[48,55,60,64],[50,57,62,66]],dt:1000}],opts:['Lidio','Locrio','Eolio'],ans:0,why:'Re mayor contiene Fa♯, el ♯4 de Do lidio.'},
+  {q:'re – Sol (i – IV mayor)',audio:[{l:'Escuchar',mode:'chords',m:[[50,57,62,65],[43,55,59,62]],dt:1000}],opts:['Eolio','Dórico','Frigio'],ans:1,why:'El IV mayor aporta el Si natural, la 6ª mayor del dórico.'}]);});
+/* ===== ETAPA 7 ===== */
+S(6,'Escribe modos con armadura',function(b,api){
+ function mk(sig,steps,alts,txt,why){return {sig:sig,cols:8,txt:txt,why:why,check:expectCheck(steps.map(function(s,i){return {s:s,a:alts[i]};}))};}
+ entry(b,api,[mk(-2,[5,6,7,8,9,10,11,12],[0,0,-1,0,0,0,-1,0],'Escribe <b>Do dórico</b> con la armadura de su escala madre, Si♭ mayor (2♭), de Do5 a Do6.','Si♭ y Mi♭ vienen de la armadura. El La es natural.'),
+  mk(4,[3,4,5,6,7,8,9,10],[0,0,1,1,0,1,1,0],'Escribe <b>La lidio</b> con la armadura de su madre, Mi mayor (4♯), de La4 a La5.','Do♯ y Re♯ (el ♯4) están en la armadura de Mi mayor.')]);});
+S(6,'Escribe modos con alteraciones',function(b,api){
+ function mk(steps,alts,txt,why){return {sig:0,cols:8,txt:txt,why:why,check:expectCheck(steps.map(function(s,i){return {s:s,a:alts[i]};}))};}
+ entry(b,api,[mk([0,1,2,3,4,5,6,7],[0,0,1,0,0,0,0,0],'Escribe <b>Mi frigio dominante</b> sin armadura, de Mi4 a Mi5.','El Sol♯ da la tercera mayor sobre la segunda menor.'),
+  mk([5,6,7,8,9,10,11,12],[0,0,0,1,0,0,-1,0],'Escribe <b>Do lidio dominante</b> sin armadura, de Do5 a Do6.','Fa♯ (♯4) y Si♭ (♭7).')]);});
+S(6,'Compón en un modo',function(b,api){
+ b.innerHTML='<p>Escribe un motivo de 5 notas para cada modo. Debe usar solo notas del modo, incluir su <b>nota característica</b> y terminar en la tónica.</p>';
+ function rule(pcsOk,must,mustTxt,tonic){return function(ns){if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var bad=[],cls=[],ok=true,has=false;ns.forEach(function(n,i){var pc=A.midOf(A.stepNote(n.s,n.a))%12;if(pcsOk.indexOf(pc)<0){cls[i]='bad';ok=false;bad.push('la nota '+(i+1)+' no pertenece al modo');}else cls[i]='';if(pc===must)has=true;});
+   if(!has){ok=false;bad.push('falta '+mustTxt);}
+   if(A.midOf(A.stepNote(ns[4].s,ns[4].a))%12!==tonic){ok=false;cls[4]='bad';bad.push('debe terminar en la tónica');}
+   if(ok)cls=ns.map(function(){return 'ok';});return {ok:ok,cls:cls,msg:'Revisa: '+bad.join('; ')+'.'};};}
+ entry(b,api,[{sig:0,cols:5,txt:'<b>Re dórico</b>: usa Si natural (la 6ª mayor) y termina en Re.',why:'El Si natural da el color dórico. Escúchalo con el botón.',check:rule([2,4,5,7,9,11,0],11,'el Si natural',2)},
+  {sig:0,cols:5,txt:'<b>Sol mixolidio</b>: usa Fa natural (la 7ª menor) y termina en Sol.',why:'El Fa natural da la sonoridad de dominante.',check:rule([7,9,11,0,2,4,5],5,'el Fa natural',7)}]);});
+/* ===== ETAPA 8 ===== */
+S(7,'Un modo para cada acorde',function(b,api){
+ b.innerHTML='<p>En jazz y música moderna se elige un modo para improvisar según el acorde. En Do mayor, cada acorde diatónico lleva su modo.</p><div id="mm"></div>';
+ match(b.querySelector('#mm'),api,{head:'¿Qué modo va con cada acorde?',cats:['Jónico','Dórico','Frigio','Lidio','Mixolidio','Eolio','Locrio'],rows:[['Do maj7 (I)',0],['re m7 (II)',1],['mi m7 (III)',2],['Fa maj7 (IV)',3],['Sol 7 (V)',4],['la m7 (VI)',5],['si m7♭5 (VII)',6]].map(function(x){return {l:x[0],ans:x[1]};})});});
+S(7,'Elegir un color',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Buscas un sonido de aire español, con segunda menor.',opts:['Frigio','Lidio','Jónico'],ans:0,why:'El frigio y la cadencia andaluza son la base de ese sonido.'},{q:'Buscas un tema luminoso y soñador, más brillante que la escala mayor.',opts:['Eolio','Lidio','Locrio'],ans:1,why:'El ♯4 del lidio le da ese color.'},{q:'Buscas un aire menor pero con un toque más abierto que el eolio.',opts:['Dórico','Frigio','Locrio'],ans:0,why:'La sexta mayor del dórico lo hace más abierto.'},{q:'Buscas un sonido de dominante, sin sensible.',opts:['Mixolidio','Lidio','Jónico'],ans:0,why:'La séptima menor evita la sensible.'}]);});
+S(7,'Practica los modos con un bordón',function(b,api){
+ b.innerHTML='<p>Práctica habitual: sostén la tónica del modo en la mano izquierda (un bordón) y toca la escala con la derecha. Así el oído «ancla» el centro.</p><p class="lbl">Elige un modo sobre las teclas blancas.</p>';
+ var names=['Jónico','Dórico','Frigio','Lidio','Mixolidio','Eolio','Locrio'],row=el('<div class="row"></div>'),K=mkKb(b,60,83,function(m){A.play(m,1);}),seen={};b.appendChild(row);
+ names.forEach(function(n,k){var bt=el('<button class="btn ghost sm">'+WN[k]+' '+n.toLowerCase()+'</button>');bt.onclick=function(){var ms=WHITES.slice(k,k+8),t=A.ac();A.tone(ms[0]-24,t?t.currentTime+.04:0,6,.2);A.seq(ms,.5);seen[k]=1;if(Object.keys(seen).length>=2)api.done();};row.appendChild(bt);});
+ b.insertAdjacentHTML('beforeend','<p class="lbl" style="margin-top:8px">Prueba dos modos para continuar.</p>');});
+S(7,'Evaluación final del tema',function(b,api){quiz(b,api,[
+ {q:'¿Qué modo es el II grado de la escala mayor?',opts:['Frigio','Dórico','Lidio','Eolio'],ans:1,why:'Dórico.'},
+ {q:'¿Qué modo tiene la 4ª aumentada?',opts:['Lidio','Mixolidio','Locrio'],ans:0,why:'El ♯4 es el rasgo del lidio.'},
+ {q:'Armadura sin alteraciones y centro en Sol: ¿qué modo?',opts:['Sol mixolidio','Sol jónico','Sol dórico','Sol lidio'],ans:0,why:'Sol es el V de Do mayor.'},
+ {q:'¿Qué modo se corresponde con la menor natural?',opts:['Dórico','Eolio','Frigio'],ans:1,why:'Eolio, el modo del VI.'},
+ {q:'El frigio dominante pertenece a la familia de…',opts:['La menor armónica','La mayor','La menor melódica'],ans:0,why:'Es el V modo de la menor armónica.'},
+ {q:'¿Qué modo casi no se usa como centro tonal?',opts:['Locrio','Dórico','Mixolidio'],ans:0,why:'Su acorde de tónica es disminuido.'},
+ {q:'La fórmula 1 2 ♭3 4 5 6 ♭7 corresponde al…',opts:['Dórico','Eolio','Frigio'],ans:0,why:'La sexta mayor distingue al dórico del eolio.'}]);});
+window.AH_LESSON.TOPICS[3]=STEPS;
+})();
+
+(function(){
+'use strict';
+var A=window.AH,L=window.AH_LESSON,el=A.el,KEY='compas_armonia_v1',STEPS=[],T={},TID=1;
+var app=document.getElementById('app');
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+var st=load();
+var BLOQUES=[
+ ['Bloque I · Fundamentos de teoría y armonía tonal',['Tonalidad','Escalas','Modos','Consonancia y disonancia','Intervalos en una tonalidad','Rítmica, métrica y organización','Acordes e inversiones','Acordes de séptima','Inversiones de acordes de séptima','Progresión V-I']],
+ ['Bloque II · Armonía funcional y conducción de voces',['Séptima de dominante','La frase musical y la estructura','Articulaciones y conducción melódica','El acorde de cuarta y sexta cadencial','Usos de los grados VI y IV⁶','Subdominante y dominante con séptima','El V como área tonal','Usos de los grados III y VII','Secuencias diatónicas','Arpegios y notas de paso']],
+ ['Bloque III · Contrapunto, cromatismo y armonía avanzada',['Adornos barrocos','Suspensiones, anticipaciones y notas pedal','Acorde de séptima disminuida','Acorde de séptima semidisminuida','Mixtura modal','Secuencias de acordes de séptima','Modulación diatónica','Novenas, oncenas y trecenas','Acorde napolitano','Sextas aumentadas']],
+ ['Bloque IV · Armonía cromática, técnicas contemporáneas y composición',['Mixtura modal avanzada','Nuevas técnicas de modulación','Notación musical avanzada','Notación contemporánea','Acordes por cuartas','Escalas contemporáneas','Armonía por segundas y clusters','Politonalidad y polimodalidad','Armonía no funcional y atonalidad','Análisis y composición musical']]];
+var TM={1:{t:'Tonalidad',sub:['Concepto de tonalidad','Centro tonal y jerarquía de los grados','Tonalidades mayores y menores','Armaduras y círculo de quintas','Funciones tonales']},2:{t:'Escalas',sub:['Escala mayor','Escalas menores: natural, armónica y melódica','Escalas cromáticas','Escalas simétricas','Relación entre escalas y tonalidad']},3:{t:'Modos',sub:['Modos derivados de la escala mayor','Modos derivados de la escala menor melódica','Modos derivados de la escala menor armónica','Características modales','Diferencia entre modalidad y tonalidad']}};
+function use(id){TID=id;STEPS=L.TOPICS[id];st['t'+id]=st['t'+id]||{done:{},sc:{}};T=st['t'+id];}
+function pctOf(id){var s=st['t'+id];return s?Math.round(Object.keys(s.done).length/L.TOPICS[id].length*100):0;}
+function reach(){for(var i=0;i<STEPS.length;i++)if(!T.done[i])return i;return STEPS.length-1;}
+function ndone(){return Object.keys(T.done).length;}
+function topicCard(id){use(id);var n=ndone(),tot=STEPS.length,pct=Math.round(n/tot*100);
+ return '<div class="card" style="margin-bottom:14px"><p class="eyebrow">Tema '+id+' · Bloque I</p><h2>'+TM[id].t+'</h2><ul class="etapas" style="margin:10px 0 14px">'+TM[id].sub.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ul><div class="bar" aria-label="Progreso"><i style="width:'+pct+'%"></i></div><p class="lbl" style="margin:8px 0 0">'+n+' de '+tot+' pasos · 8 etapas</p><div class="cont"><button class="btn go" data-t="'+id+'">'+(n?(n>=tot?'Repasar el tema':'Continuar'):'Comenzar el tema')+'</button>'+(n?'<button class="btn ghost rs" data-t="'+id+'">Reiniciar</button>':'')+'</div></div>';}
+function start(id){use(id);lesson(id,ndone()&&ndone()<STEPS.length?reach():0);}
+function home(){
+ var blk='',k=0;
+ BLOQUES.forEach(function(b){blk+='<section class="blk"><h3>'+b[0]+'</h3><div class="tl">';
+  b[1].forEach(function(t){k++;
+   if(TM[k])blk+='<button class="tp on" data-t="'+k+'"><span class="n">'+k+'</span><span>'+TM[k].t+'<small>'+(pctOf(k)?pctOf(k)+'% completado':'Desarrollado · 8 etapas')+'</small></span></button>';
+   else blk+='<div class="tp off"><span class="n">'+k+'</span><span>'+t+'<small>Próximamente</small></span></div>';});
+  blk+='</div></section>';});
+ app.innerHTML='<div class="top"><div class="brand">Compás <span>Armonía</span></div><span class="pill">40 temas · 4 bloques</span></div>'
+ +'<div class="hero"><p class="eyebrow">Curso avanzado</p><h1>Armonía, tema a tema</h1><p>Cada tema se estudia en ocho etapas, desde la definición hasta las aplicaciones prácticas. Con teclado, pentagrama y oído. Por ahora están desarrollados los temas 1, 2 y 3.</p></div>'
+ +topicCard(1)+topicCard(2)+topicCard(3)
+ +'<div class="blk"><h3>Las ocho etapas de cada tema</h3><ol class="etapas">'+L.STAGES.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ol></div>'+blk;
+ [].forEach.call(app.querySelectorAll('.go,.tp.on'),function(b){b.onclick=function(){start(+b.dataset.t);};});
+ [].forEach.call(app.querySelectorAll('.rs'),function(b){b.onclick=function(){use(+b.dataset.t);T.done={};T.sc={};save();home();};});
+ window.scrollTo(0,0);}
+function lesson(tid,i){use(tid);
+ var stp=STEPS[i],first=[],reached=reach();
+ L.STAGES.forEach(function(_,s){first[s]=STEPS.findIndex(function(x){return x.st===s;});});
+ var chips=L.SHORT.map(function(s,k){var all=STEPS.every(function(x,j){return x.st!==k||T.done[j];}),dis=first[k]>reached;
+  return '<button class="chip'+(k===stp.st?' cur':all?' dn':'')+'" data-i="'+first[k]+'"'+(dis?' disabled':'')+'>'+(k+1)+'. '+s+'</button>';}).join('');
+ var pct=Math.round(ndone()/STEPS.length*100),inStage=STEPS.filter(function(x){return x.st===stp.st;}),pos=inStage.indexOf(stp)+1;
+ app.innerHTML='<div class="top"><button class="btn ghost sm" id="bk">← Temario</button><span class="pill">Tema '+tid+' · '+TM[tid].t+'</span></div><div class="chips">'+chips+'</div><div class="bar"><i style="width:'+pct+'%"></i></div>'
+ +'<div class="stephead"><p class="eyebrow">Etapa '+(stp.st+1)+' · '+L.STAGES[stp.st]+'</p><h2>'+stp.ti+'</h2><p class="lbl" style="margin:6px 0 0">Paso '+pos+' de '+inStage.length+' en esta etapa</p></div><div class="card" id="box"></div>'
+ +'<div class="foot"><button class="btn ghost" id="pv"'+(i===0?' disabled':'')+'>Atrás</button><button class="btn" id="nx"'+(T.done[i]?'':' disabled')+'>'+(i===STEPS.length-1?'Terminar tema':'Continuar')+'</button></div>';
+ var was=!!T.done[i],sc={t:0,c:0},nx=document.getElementById('nx');
+ var api={done:function(){if(!T.done[i]){T.done[i]=1;if(!was)T.sc[i]=sc;save();}nx.disabled=false;},score:function(ok){if(was)return;sc.t++;if(ok)sc.c++;}};
+ try{stp.r(document.getElementById('box'),api);}catch(e){document.getElementById('box').innerHTML='<p>No se pudo mostrar este paso.</p>';if(window.console)console.error(e);api.done();}
+ if(stp.auto)api.done();
+ nx.onclick=function(){if(i===STEPS.length-1)end(tid);else lesson(tid,i+1);};
+ document.getElementById('pv').onclick=function(){if(i>0)lesson(tid,i-1);};
+ document.getElementById('bk').onclick=home;
+ [].forEach.call(document.querySelectorAll('.chip'),function(c){c.onclick=function(){lesson(tid,+c.dataset.i);};});
+ window.scrollTo(0,0);}
+function end(tid){use(tid);
+ var c=0,t=0;Object.keys(T.sc).forEach(function(k){c+=T.sc[k].c;t+=T.sc[k].t;});var p=t?Math.round(c/t*100):100;
+ var nextTxt=TM[tid+1]?'El tema '+(tid+1)+', '+TM[tid+1].t+', ya está disponible en el temario.':'El siguiente tema del temario estará disponible próximamente.';
+ app.innerHTML='<div class="top"><button class="btn ghost sm" id="bk">← Temario</button><span class="pill">Tema '+tid+' · '+TM[tid].t+'</span></div><div class="card fin"><p class="eyebrow">Tema completado</p><div class="big">'+p+'%</div><p class="mut" style="margin:8px 0 20px">'+c+' de '+t+' respuestas acertadas a la primera</p><p style="max-width:52ch;margin:0 auto 20px">Ya recorriste las ocho etapas de '+TM[tid].t+': definición, clasificación, construcción, reglas, ejemplos, análisis, escritura y aplicaciones. '+nextTxt+'</p><div class="row" style="justify-content:center"><button class="btn" id="bk2">Volver al temario</button><button class="btn ghost" id="rp">Repasar desde el inicio</button></div></div>';
+ document.getElementById('bk').onclick=home;document.getElementById('bk2').onclick=home;document.getElementById('rp').onclick=function(){lesson(tid,0);};window.scrollTo(0,0);}
+home();
+})();
+</script></body></html>
