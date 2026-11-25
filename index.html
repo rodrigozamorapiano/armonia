@@ -101,6 +101,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc);outli
 .fin .big{font-family:var(--disp);font-size:3.4rem;color:#fff;line-height:1}
 @media(max-width:520px){.btn{padding:.8rem 1rem}.foot .btn{flex:1}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.nt{pointer-events:none}
 
 [hidden]{display:none!important}
 </style></head><body><div id="app"></div><script>(function(){
@@ -142,7 +143,7 @@ function now(){var c=ac();return c?c.currentTime+0.04:0;}
 function play(m,d){tone(m,now(),d||1.6,.26);}
 function seq(ms,dt,cb){var t=now();ms.forEach(function(m,i){tone(m,t+i*dt,dt*1.5,.24);if(cb)setTimeout(function(){cb(i);},i*dt*1000);});}
 function chord(ms,d,delay,cb){var t=now()+(delay||0);ms.forEach(function(m,i){tone(m,t+i*0.012,d||1.4,.17);});}
-function chords(list,dt,cb){list.forEach(function(ms,i){setTimeout(function(){chord(ms,dt*1.4);if(cb)cb(i);},i*dt*1000);});}
+function chords(list,dt,cb){dt=dt||.9;if(dt>20)dt=dt/1000;list.forEach(function(ms,i){setTimeout(function(){chord(ms,dt*1.4);if(cb)cb(i);},i*dt*1000);});}
 /* ---------- pentagrama ---------- */
 var COL='currentColor';
 function Y(s){return 24+(12-s)*8;}
@@ -152,9 +153,10 @@ function natG(x,y){return '<g stroke="'+COL+'" fill="none"><line x1="'+(x-2.4)+'
 function accG(a,x,y){return a>0?sharpG(x,y):a<0?flatG(x,y):natG(x,y);}
 /* o: {sig, notes:[{s,a,cls,lab,open,sh}], gap, hit, bar, w, labels} */
 function staff(o){
- var f=o.sig||0,ns=o.notes||[],nsig=Math.abs(f),cols=o.hit||ns.length||1,gap=o.gap||(o.hit?46:44);
+ var f=o.sig||0,ns=o.notes||[],nsig=Math.abs(f),cols=o.hit||o.cols||ns.length||1,gap=o.gap||(o.hit?46:44);
  var x0=52+nsig*11+(nsig?12:4)+22,W=o.w||Math.max(300,x0+cols*gap+16),s='';
- s+='<svg viewBox="0 0 '+W+' 184" role="img" aria-label="'+(o.aria||'Pentagrama en clave de sol')+'" style="max-width:'+Math.round(W*1.45)+'px"><g class="nt" stroke="'+COL+'" fill="none">';
+ var lo=ns.reduce(function(m,n){return Math.min(m,n.s);},0),labY=Math.max(152,Y(lo)+24),H=Math.max(184,labY+10);
+ s+='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+(o.aria||'Pentagrama en clave de sol')+'" style="max-width:'+Math.round(W*1.45)+'px"><g class="nt" stroke="'+COL+'" fill="none">';
  [0,2,4,6,8].forEach(function(k){s+='<line x1="6" x2="'+(W-6)+'" y1="'+Y(k)+'" y2="'+Y(k)+'" stroke-width="1.1" opacity=".85"/>';});
  s+='<line x1="6" x2="6" y1="'+Y(8)+'" y2="'+Y(0)+'" stroke-width="1.4"/>';
  if(o.bar)s+='<line x1="'+(W-8)+'" x2="'+(W-8)+'" y1="'+Y(8)+'" y2="'+Y(0)+'" stroke-width="2.4"/>';
@@ -162,11 +164,13 @@ function staff(o){
  var pos=f>0?[8,5,9,6,3,7,4]:[4,7,3,6,2,5,1];
  for(var i=0;i<nsig;i++)s+=(f>0?sharpG:flatG)(52+i*11+5,Y(pos[i]));
  s+='</g>';
- if(o.hit){for(var c=0;c<cols;c++){var cx=x0+c*gap;
+ if(o.hit){for(var c=0;c<cols;c++){var cx=x0+c*gap;if(o.nohit&&o.nohit.indexOf(c)>=0)continue;
    if(!ns.filter(function(n){return n.c===c;}).length)s+='<circle class="nt" cx="'+cx+'" cy="'+Y(4)+'" r="4" fill="none" stroke="'+COL+'" stroke-dasharray="2 3" opacity=".4"/>';
    for(var st=-3;st<=13;st++)s+='<rect class="hit" data-c="'+c+'" data-s="'+st+'" x="'+(cx-gap/2)+'" y="'+(Y(st)-4)+'" width="'+gap+'" height="8"/>';}}
+ var grp={};ns.forEach(function(n){if(n.c!=null){(grp[n.c]=grp[n.c]||[]).push(n);}});
+ Object.keys(grp).forEach(function(k){var g=grp[k].slice().sort(function(a,b){return a.s-b.s;});for(var i=1;i<g.length;i++)if(g[i].s-g[i-1].s===1&&!g[i-1].dx)g[i].dx=13;});
  ns.forEach(function(n,i){
-  var cx=x0+(n.c!=null?n.c:i)*gap,cy=Y(n.s),alt=sigAlt(f,letterOfStep(n.s)),a=n.a===undefined?alt:n.a,show=n.sh===undefined?(a!==alt):n.sh;
+  var cx=x0+(n.c!=null?n.c:i)*gap+(n.dx||0),cy=Y(n.s),alt=sigAlt(f,letterOfStep(n.s)),a=n.a===undefined?alt:n.a,show=n.sh===undefined?(a!==alt):n.sh;
   s+='<g class="nt '+(n.cls||'')+'">';
   for(var k=-2;k>=n.s;k-=2)s+='<line x1="'+(cx-11)+'" x2="'+(cx+11)+'" y1="'+Y(k)+'" y2="'+Y(k)+'" stroke="'+COL+'" stroke-width="1.2"/>';
   for(k=10;k<=n.s;k+=2)s+='<line x1="'+(cx-11)+'" x2="'+(cx+11)+'" y1="'+Y(k)+'" y2="'+Y(k)+'" stroke="'+COL+'" stroke-width="1.2"/>';
@@ -174,7 +178,7 @@ function staff(o){
   s+=n.open?'<ellipse cx="'+cx+'" cy="'+cy+'" rx="6.8" ry="4.8" transform="rotate(-18 '+cx+' '+cy+')" fill="none" stroke="'+COL+'" stroke-width="2"/>':'<ellipse cx="'+cx+'" cy="'+cy+'" rx="6.6" ry="4.7" transform="rotate(-18 '+cx+' '+cy+')" fill="'+COL+'"/>';
   if(n.stem)s+=n.s<4?'<line x1="'+(cx+6.1)+'" y1="'+(cy-1)+'" x2="'+(cx+6.1)+'" y2="'+(cy-30)+'" stroke="'+COL+'" stroke-width="1.4"/>':'<line x1="'+(cx-6.1)+'" y1="'+(cy+1)+'" x2="'+(cx-6.1)+'" y2="'+(cy+30)+'" stroke="'+COL+'" stroke-width="1.4"/>';
   s+='</g>';
-  if(n.lab)s+='<text x="'+cx+'" y="152" text-anchor="middle" font-size="12" font-weight="600" fill="#9DB1D9" font-family="DM Sans,system-ui,sans-serif">'+n.lab+'</text>';
+  if(n.lab)s+='<text x="'+cx+'" y="'+labY+'" text-anchor="middle" font-size="12" font-weight="600" fill="#9DB1D9" font-family="DM Sans,system-ui,sans-serif">'+n.lab+'</text>';
  });
  return s+'</svg>';}
 /* escala -> notas de pentagrama */
@@ -220,7 +224,7 @@ var STEPS=[];
 function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
 function mapMid(sig,notes){return notes.map(function(n){var a=n.a===undefined?A.sigAlt(sig,A.letterOfStep(n.s)):n.a;return A.midOf(A.stepNote(n.s,a));});}
 /* ---------- componentes ---------- */
-function playAu(a){if(a.mode==='chord')A.chord(a.m,1.8);else if(a.mode==='chords')A.chords(a.m,a.dt||900);else A.seq(a.m,a.dt||0.42);}
+function playAu(a){if(a.mode==='rh'){if(window.AH_RH)window.AH_RH(a.s,null,a.ts);return;}if(a.mode==='chord')A.chord(a.m,1.8);else if(a.mode==='chords')A.chords(a.m,(a.dt||.9)>20?a.dt/1000:(a.dt||.9));else A.seq(a.m,a.dt||0.42);}
 function quiz(box,api,qs){var left=qs.length;
  qs.forEach(function(d){
   var w=el('<div class="q">'+(d.pre?'<div class="svgbox">'+d.pre+'</div>':'')+'<p class="qt">'+d.q+'</p>'+(d.audio?'<div class="row">'+d.audio.map(function(a,i){return '<button class="btn ghost sm" data-au="'+i+'">▶ '+a.l+'</button>';}).join('')+'</div>':'')+'<div class="opts">'+d.opts.map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o+'</button>';}).join('')+'</div><div class="fb" hidden></div></div>');
@@ -285,7 +289,8 @@ function entry(box,api,rounds){var r=0,ui=el('<div></div>');box.appendChild(ui);
   wrap=ui.querySelector('#en');fb=ui.querySelector('.fb');var missed=false,locked=false;
   function eff(n){return n.acc!==null?n.acc:A.sigAlt(d.sig,A.letterOfStep(n.s));}
   function draw(res){var ns=[];notes.forEach(function(n,c){if(!n)return;ns.push({c:c,s:n.s,a:eff(n),sh:n.acc!==null,open:true,cls:res?res[c]:''});});
-   wrap.innerHTML=A.staff({sig:d.sig,notes:ns,hit:d.cols,gap:d.cols>6?44:60});}
+   (d.given||[]).forEach(function(g){ns.push({c:g.c,s:g.s,a:g.a||0,open:false,cls:'hl'});});
+   wrap.innerHTML=A.staff({sig:d.sig,notes:ns,hit:d.cols,nohit:d.nohit,gap:d.cols>6?44:60});}
   function mids(){return notes.filter(Boolean).map(function(n){return A.midOf(A.stepNote(n.s,eff(n)));});}
   wrap.addEventListener('click',function(e){if(locked)return;var h=e.target.closest('.hit');if(!h)return;var c=+h.dataset.c,s=+h.dataset.s,n=notes[c];
    if(n&&n.s===s){var i=cyc.indexOf(n.acc)+1;if(i>=cyc.length)notes[c]=null;else n.acc=cyc[i];}else{notes[c]={s:s,acc:null};A.play(A.midOf(A.stepNote(s,A.sigAlt(d.sig,A.letterOfStep(s)))),1);}
@@ -816,6 +821,874 @@ window.AH_LESSON.TOPICS[3]=STEPS;
 
 (function(){
 'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n)};}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+/* columnas de notas: 'C4,G4 D4,A4' = dos intervalos armónicos */
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});
+ return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function playCols(label,cols,dt,cls){var r=el('<div class="row"><button class="btn '+(cls||'sm')+'">▶ '+label+'</button></div>');r.firstChild.onclick=function(){A.chords(cmid(cols),dt||900);};return r;}
+var IV=[['Unísono (1ª justa)','p'],['2ª menor','d'],['2ª mayor','d'],['3ª menor','i'],['3ª mayor','i'],['4ª justa','x'],['4ª aumentada (tritono)','d'],['5ª justa','p'],['6ª menor','i'],['6ª mayor','i'],['7ª menor','d'],['7ª mayor','d'],['8ª justa','p']];
+var UP=['C4','Db4','D4','Eb4','E4','F4','F#4','G4','Ab4','A4','Bb4','B4','C5'];
+var TYPE={p:'Consonancia perfecta',i:'Consonancia imperfecta',d:'Disonancia',x:'Caso especial: depende del contexto'};
+/* ===== ETAPA 1 ===== */
+S(0,'Reposo y tensión',function(b,api){
+ b.innerHTML='<div class="def"><b>Consonancia:</b> sonoridad estable, de reposo, que no necesita resolver.<br><b>Disonancia:</b> sonoridad tensa o inestable, que pide moverse hacia una consonancia.</div><p>Escucha tres intervalos desde Do y fíjate en cuál suena más tenso.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál suena más tenso?',audio:[{l:'Do – Sol',mode:'chord',m:[60,67]},{l:'Do – Re',mode:'chord',m:[60,62]},{l:'Do – Mi',mode:'chord',m:[60,64]}],opts:['Do – Sol','Do – Re','Do – Mi'],ans:1,why:'La segunda (Do–Re) es una disonancia. La quinta y la tercera suenan estables.'}]);});
+S(0,'Por qué suenan así',function(b,api){
+ b.innerHTML='<p>Desde la física, un intervalo suena más consonante cuanto más simple es la razón entre las frecuencias de sus dos notas (afinación «justa»).</p>'+table([['Octava','2 : 1'],['Quinta justa','3 : 2'],['Cuarta justa','4 : 3'],['Tercera mayor','5 : 4'],['Tercera menor','6 : 5'],['Segunda mayor','9 : 8'],['Segunda menor','16 : 15'],['Séptima mayor','15 : 8']],['Intervalo','Razón'])+'<p class="lbl" style="margin:8px 0 14px">La percepción también depende de la cultura y del estilo musical, no solo de la física.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué razón corresponde a la quinta justa?',opts:['2 : 1','3 : 2','5 : 4','16 : 15'],ans:1,why:'La nota superior vibra 3 veces por cada 2 de la inferior.'},{q:'¿Qué intervalo tiene la razón más simple de la lista (sin contar el unísono)?',opts:['Octava','Tercera mayor','Segunda menor'],ans:0,why:'2 : 1 es la más simple y por eso la octava es la consonancia más pura.'}]);});
+S(0,'La tonalidad usa los dos estados',function(b,api){
+ b.innerHTML='<p>En música tonal la tensión y el reposo se alternan. La tónica es el reposo, y las disonancias (como la séptima de dominante) crean movimiento hacia ella.</p><div class="def">Una pieza que solo usara consonancias sonaría estática. Una que solo usara disonancias sonaría inestable. El interés está en el equilibrio entre ambas.</div><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Para qué sirve una disonancia en una frase tonal?',opts:['Para adornar sin función','Para crear tensión que se resuelve en reposo','Para cambiar de compás'],ans:1,why:'Genera impulso hacia una consonancia.'}]);});
+S(0,'Comprueba lo aprendido',function(b,api){quiz(b,api,[
+ {q:'Una consonancia es…',opts:['Un sonido estable que no pide resolver','Un sonido muy fuerte','Un intervalo de más de una octava'],ans:0,why:'Transmite reposo.'},
+ {q:'La disonancia suele…',opts:['Pedir una resolución','Terminar una pieza','Evitarse siempre'],ans:0,why:'Tiende a moverse hacia una consonancia.'},
+ {q:'La octava tiene razón…',opts:['3 : 2','2 : 1','5 : 4'],ans:1,why:'Es la consonancia más simple.'}]);});
+/* ===== ETAPA 2 ===== */
+S(1,'Explora los intervalos',function(b,api){
+ b.innerHTML='<p>Pulsa cada intervalo sobre Do y escucha cómo suena junto y por separado. Explora 8 para continuar.</p><div class="row" id="bs"></div><div class="svgbox" id="sf"></div><div class="info" id="in">Elige un intervalo.</div><div class="row"><button class="btn sm" id="j">▶ Juntas</button><button class="btn ghost sm" id="s">▶ Una tras otra</button></div>';
+ var cur=0,seen={},bs=b.querySelector('#bs'),sf=b.querySelector('#sf'),inf=b.querySelector('#in');
+ function show(k){cur=k;sf.innerHTML=cstf('C4,'+UP[k],{gap:60,w:200});var t=IV[k][1];inf.innerHTML='<b style="color:#fff;font-family:var(--disp);font-size:1.35rem">'+IV[k][0]+'</b> · '+k+' semitono'+(k===1?'':'s')+'<br>'+TYPE[t];seen[k]=1;if(Object.keys(seen).length>=8)api.done();}
+ IV.forEach(function(x,k){var bt=el('<button class="btn ghost sm">'+k+'</button>');bt.title=x[0];bt.onclick=function(){show(k);A.chord([60,60+k],1.8);};bs.appendChild(bt);});
+ b.querySelector('#j').onclick=function(){A.chord([60,60+cur],1.8);};
+ b.querySelector('#s').onclick=function(){A.seq([60,60+cur],.6);};
+ show(0);b.insertAdjacentHTML('beforeend','<p class="lbl">Los botones indican los semitonos sobre Do.</p>');});
+S(1,'Consonancias perfectas e imperfectas',function(b,api){
+ b.innerHTML='<div class="scroll"><table class="tbl"><tr><th>Tipo</th><th>Intervalos</th></tr><tr><td>Consonancias perfectas</td><td>Unísono, 5ª justa, 8ª justa</td></tr><tr><td>Consonancias imperfectas</td><td>3ª y 6ª, mayores y menores</td></tr><tr><td>Disonancias</td><td>2ª, 7ª, 4ª aumentada y 5ª disminuida</td></tr></table></div><p style="margin-top:12px">Se llaman «perfectas» porque su sonoridad es muy pura y no tienen versión mayor o menor, solo justa. Las imperfectas son consonantes pero más cálidas, y cambian al ser mayores o menores.</p><div id="mm" style="margin-top:12px"></div>';
+ match(b.querySelector('#mm'),api,{head:'Clasifica cada intervalo:',cats:['Perfecta','Imperfecta','Disonancia'],rows:[['5ª justa',0],['3ª mayor',1],['7ª menor',2],['8ª justa',0],['6ª menor',1],['2ª mayor',2],['4ª aumentada',2],['3ª menor',1]].map(function(x){return {l:x[0],ans:x[1]};})});});
+S(1,'El caso de la cuarta justa',function(b,api){
+ b.innerHTML='<p>La 4ª justa es un intervalo ambiguo:</p>'+table([['Entre dos voces superiores','Se trata como consonancia'],['Contra el bajo (contrapunto estricto)','Se trata como disonancia'],['En música popular y moderna','Suele sonar estable']],['Contexto','Tratamiento'])+'<p class="lbl" style="margin:8px 0 14px">En teoría clásica cuenta como perfecta cuando es una consonancia, y por eso la tradición pide cuidar cómo se coloca sobre el bajo.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'La 4ª justa contra el bajo, en contrapunto estricto, se considera…',opts:['Consonancia perfecta','Disonancia','Consonancia imperfecta'],ans:1,why:'Contra el bajo da una sensación de suspensión, así que se trata como disonancia.'},{q:'Entre dos voces superiores la 4ª justa se trata como…',opts:['Disonancia','Consonancia'],ans:1,why:'Ahí el bajo la «sostiene».'}]);});
+S(1,'Grados de disonancia',function(b,api){
+ b.innerHTML='<p>No todas las disonancias suenan igual de ásperas. Las segundas menores y las séptimas mayores (1 semitono de distancia, o su inversión) son las más duras. Las segundas mayores y las séptimas menores son más suaves. El tritono tiene una tensión característica.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál suena más áspera?',audio:[{l:'A: 2ª menor',mode:'chord',m:[60,61]},{l:'B: 2ª mayor',mode:'chord',m:[60,62]}],opts:['A','B'],ans:0,why:'Un semitono es la distancia más estrecha del piano.'},{q:'¿Cuál suena más áspera?',audio:[{l:'A: 7ª mayor',mode:'chord',m:[60,71]},{l:'B: 7ª menor',mode:'chord',m:[60,70]}],opts:['A','B'],ans:0,why:'La séptima mayor queda a un semitono de la octava.'}]);});
+S(1,'Acordes consonantes y disonantes',function(b,api){
+ b.innerHTML='<p>Los acordes también se clasifican. Las tríadas mayor y menor son consonantes. Las tríadas disminuida y aumentada, y los acordes de séptima, son disonantes.</p><div class="row" id="ab"></div><div id="mm" style="margin-top:8px"></div>';
+ var ab=b.querySelector('#ab');[['Mayor',[60,64,67]],['Menor',[60,63,67]],['Disminuida',[60,63,66]],['Aumentada',[60,64,68]],['Sol7',[55,59,62,65]]].forEach(function(x){var bt=el('<button class="btn ghost sm">▶ '+x[0]+'</button>');bt.onclick=function(){A.chord(x[1],1.8);};ab.appendChild(bt);});
+ match(b.querySelector('#mm'),api,{head:'¿Consonante o disonante?',cats:['Consonante','Disonante'],rows:[['Tríada mayor',0],['Tríada menor',0],['Tríada disminuida',1],['Tríada aumentada',1],['Séptima de dominante',1]].map(function(x){return {l:x[0],ans:x[1]};})});});
+/* ===== ETAPA 3 ===== */
+S(2,'Construye intervalos en el teclado',function(b,api){
+ b.innerHTML='<p>Cuenta semitonos desde Do para ubicar cada intervalo.</p>';
+ kbBuild(b,api,[{pcs:[0,7],n:2,txt:'Do y su quinta justa',why:'Do–Sol: 7 semitonos.'},{pcs:[0,4],n:2,txt:'Do y su tercera mayor',why:'Do–Mi: 4 semitonos.'},{pcs:[0,8],n:2,txt:'Do y su sexta menor',why:'Do–La♭: 8 semitonos.'},{pcs:[0,6],n:2,txt:'Do y su tritono',why:'Do–Fa♯: 6 semitonos.'},{pcs:[0,10],n:2,txt:'Do y su séptima menor',why:'Do–Si♭: 10 semitonos.'}]);});
+S(2,'Calcula el intervalo',function(b,api){
+ b.innerHTML='<div class="def"><b>Método:</b> 1) cuenta las letras para el número (Mi a Sol: Mi–Fa–Sol, una tercera); 2) cuenta los semitonos para la calidad (3ª: 3 semitonos es menor, 4 es mayor).</div><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[
+  {pre:cstf('E4,G4',{gap:60,w:200}),q:'¿Qué intervalo es?',opts:['3ª mayor','3ª menor','4ª justa','2ª mayor'],ans:1,why:'Mi–Sol: 3 semitonos.'},
+  {pre:cstf('F4,B4',{gap:60,w:200}),q:'¿Qué intervalo es?',opts:['4ª justa','4ª aumentada','5ª justa','5ª disminuida'],ans:1,why:'Fa–Si abarca 4 letras y 6 semitonos.'},
+  {pre:cstf('A4,F5',{gap:60,w:200}),q:'¿Qué intervalo es?',opts:['6ª mayor','6ª menor','7ª menor','5ª aumentada'],ans:1,why:'La–Fa: 8 semitonos.'},
+  {pre:cstf('D4,C5',{gap:60,w:200}),q:'¿Qué intervalo es?',opts:['7ª mayor','7ª menor','6ª mayor','8ª justa'],ans:1,why:'Re–Do: 10 semitonos.'},
+  {pre:cstf('B4,F5',{gap:60,w:200}),q:'¿Qué intervalo es?',opts:['5ª justa','4ª aumentada','5ª disminuida','6ª menor'],ans:2,why:'Si–Fa abarca 5 letras y 6 semitonos.'}]);});
+S(2,'Escribe intervalos sobre una nota',function(b,api){
+ function mk(steps,alts,txt,why){return {sig:0,cols:4,txt:txt,why:why,check:expectCheck(steps.map(function(s,i){return {s:s,a:alts[i]};}))};}
+ entry(b,api,[mk([-2,0,2,5],[0,0,0,0],'Escribe, de abajo arriba: <b>Do4</b>, su 3ª mayor, su 5ª justa y su 8ª justa.','Do Mi Sol Do: tríada mayor con sus consonancias.'),
+  mk([-1,1,3,6],[0,1,0,0],'Escribe, de abajo arriba: <b>Re4</b>, su 3ª mayor, su 5ª justa y su 8ª justa.','Re Fa♯ La Re. Sin armadura, el Fa♯ lleva su sostenido.'),
+  mk([0,2,4,7],[-1,0,-1,-1],'Escribe, de abajo arriba: <b>Mi♭4</b>, su 3ª mayor, su 5ª justa y su 8ª justa.','Mi♭ Sol Si♭ Mi♭.')]);});
+S(2,'Construye acordes',function(b,api){
+ b.innerHTML='<p>Construye un acorde consonante y dos disonantes.</p>';
+ kbBuild(b,api,[{pcs:[11,2,5],n:3,txt:'la tríada disminuida sobre Si (Si–Re–Fa)',why:'Dos terceras menores seguidas forman una quinta disminuida: disonante.'},{pcs:[0,4,8],n:3,txt:'la tríada aumentada sobre Do (Do–Mi–Sol♯)',why:'Dos terceras mayores seguidas forman una quinta aumentada.'},{pcs:[7,11,2,5],n:4,txt:'el acorde de Sol con séptima (Sol–Si–Re–Fa)',why:'Contiene el tritono Si–Fa y la séptima menor Sol–Fa.'}]);});
+/* ===== ETAPA 4 ===== */
+S(3,'Reglas para resolver una disonancia',function(b,api){
+ b.innerHTML='<div class="def">1. La disonancia se resuelve en una consonancia, normalmente por grado conjunto.<br>2. La séptima baja un grado y la sensible sube un semitono.<br>3. La 5ª disminuida converge (a 3ª mayor); la 4ª aumentada se abre (a 6ª menor).</div>'+sbox(cstf('B4,F5 C5,E5',{gap:70,w:220}))+'<div class="row" id="pl"></div><div id="qq"></div>';
+ b.querySelector('#pl').appendChild(playCols('Escuchar la resolución','B4,F5 C5,E5',900));
+ quiz(b.querySelector('#qq'),api,[{q:'La séptima de un acorde de séptima de dominante resuelve…',opts:['Subiendo un grado','Bajando un grado','Quedándose igual'],ans:1,why:'Fa baja a Mi (en Sol7 → Do).'},{q:'La sensible resuelve…',opts:['Subiendo un semitono a la tónica','Bajando una 3ª','Saltando una 5ª'],ans:0,why:'Si sube a Do.'},{q:'La 5ª disminuida (Si–Fa) se resuelve en…',opts:['3ª mayor','6ª menor','Unísono'],ans:0,why:'Si sube a Do y Fa baja a Mi: Do–Mi.'}]);});
+S(3,'Excepciones',function(b,api){
+ b.innerHTML='<p>Las reglas tienen excepciones:</p>'+table([['Sensible en voz interior','Puede bajar a la quinta del acorde de tónica para no dejar la armonía incompleta.'],['Disonancia sin resolver','En el jazz, la música moderna y el siglo XX se usa como color estable.'],['Resolución retardada','La disonancia puede resolver más tarde, tras otras notas.']],['Caso','Qué ocurre'])+'<div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'En el jazz, un acorde de séptima o novena…',opts:['Siempre debe resolver','Puede funcionar como acorde estable','Está prohibido'],ans:1,why:'Los acordes con extensiones son parte de la sonoridad básica.'}]);});
+S(3,'Quintas y octavas paralelas',function(b,api){
+ b.innerHTML='<div class="def"><b>Regla clásica:</b> dos voces no deben moverse en quintas ni octavas paralelas. Al ser consonancias perfectas, las voces suenan como una sola y pierden independencia.</div><p class="lbl">Ejemplo A</p>'+sbox(cstf('C4,G4 D4,A4',{gap:70,w:200}))+'<p class="lbl">Ejemplo B</p>'+sbox(cstf('C4,E4 D4,F4',{gap:70,w:200}))+'<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Cuál de los dos ejemplos tiene quintas paralelas?',opts:['A','B'],ans:0,why:'Do–Sol y Re–La son dos quintas justas seguidas.'},{q:'Las terceras y sextas paralelas…',opts:['Están prohibidas','Se aceptan','Son disonancias'],ans:1,why:'Son consonancias imperfectas: las voces siguen sonando distintas.'}]);});
+S(3,'Las reglas cambian con la época',function(b,api){
+ b.innerHTML=table([['Edad Media','Solo la 8ª, la 5ª y la 4ª se oyen como consonancias.'],['Renacimiento','Se aceptan la 3ª y la 6ª como consonancias.'],['Barroco y Clasicismo','La disonancia se controla con preparación y resolución.'],['Romanticismo','Más cromatismo y resoluciones que se retrasan.'],['Siglo XX','«Emancipación de la disonancia»: se usa sin necesidad de resolver.']],['Época','Idea'])+'<div id="qq" style="margin-top:14px"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué época empezó a aceptar la 3ª y la 6ª como consonancias?',opts:['Edad Media','Renacimiento','Siglo XX'],ans:1,why:'Así nació el sonido de las tríadas.'},{q:'«Emancipación de la disonancia» significa…',opts:['Eliminar toda disonancia','Usar la disonancia sin obligación de resolverla','Resolver siempre a la octava'],ans:1,why:'La expresión se asocia con Schoenberg.'}]);});
+/* ===== ETAPA 5 ===== */
+S(4,'Tensión y reposo en acordes',function(b,api){
+ b.innerHTML='<p>Escucha cómo el acorde de Sol con séptima (tensión) resuelve en Do mayor (reposo).</p><div class="row"><button class="btn ghost sm" id="a">▶ Do mayor</button><button class="btn sm" id="b2">▶ Sol7 → Do</button></div>';
+ b.querySelector('#a').onclick=function(){A.chord([48,55,60,64],1.8);};
+ b.querySelector('#b2').onclick=function(){A.chords([[43,55,59,62,65],[48,55,60,64]],1100);};},true);
+S(4,'Órganum paralelo medieval',function(b,api){
+ b.innerHTML='<p>En el siglo IX, la polifonía más antigua doblaba una melodía a una 5ª o una 4ª. Esa práctica, el <b>órganum paralelo</b>, usa solo consonancias perfectas.</p>'+sbox(cstf('F3,C4 G3,D4 A3,E4 G3,D4 F3,C4',{gap:52,w:340}))+'<div id="pl"></div><p class="lbl">Ejemplo didáctico de quintas paralelas.</p>';
+ b.querySelector('#pl').appendChild(playCols('Escuchar','F3,C4 G3,D4 A3,E4 G3,D4 F3,C4',500));},true);
+S(4,'En obras y estilos',function(b,api){
+ b.innerHTML=table([['Gregoriano y órganum','Consonancias perfectas: octava, quinta y cuarta.'],['Corales de Bach','Disonancias preparadas y resueltas con cuidado.'],['Debussy','Acordes disonantes tratados como color, sin urgencia de resolver.'],['Jazz','Séptimas, novenas y trecenas como sonoridad base.']],['Contexto','Rasgo'])+'<p class="lbl" style="margin-top:8px">Referencias generales, sin notación.</p>';},true);
+S(4,'Oído: consonancia y disonancia',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[
+  {q:'¿Cuál es la disonancia?',audio:[{l:'A',mode:'chord',m:[60,67]},{l:'B',mode:'chord',m:[60,71]}],opts:['A','B'],ans:1,why:'La B es una séptima mayor.'},
+  {q:'¿Cuál es la consonancia imperfecta?',audio:[{l:'A: tercera mayor',mode:'chord',m:[60,64]},{l:'B: quinta justa',mode:'chord',m:[60,67]}],opts:['A','B'],ans:0,why:'La tercera mayor es imperfecta. La quinta es perfecta.'},
+  {q:'Tras el tritono Fa–Si, ¿qué final resuelve?',audio:[{l:'Tritono',mode:'chord',m:[65,71]},{l:'Final A',mode:'chords',m:[[65,71],[64,72]],dt:900},{l:'Final B',mode:'chords',m:[[65,71],[65,71]],dt:900}],opts:['A','B'],ans:0,why:'En A los dos sonidos se mueven a una consonancia (Mi–Do). En B no hay resolución.'}]);});
+/* ===== ETAPA 6 ===== */
+S(5,'Análisis: intervalos melódicos',function(b,api){
+ b.innerHTML='<p>Los intervalos también existen en la melodía (una nota tras otra). Aquí aparecen los primeros sonidos de «Para Elisa».</p>'+sbox(A.staff({sig:0,gap:46,bar:true,notes:['E5','D#5','E5','D#5','E5','B4'].map(function(x,i){var n=N(x);return {s:n.s,a:n.a,stem:true,lab:['Mi','Re♯','Mi','Re♯','Mi','Si'][i]};})}))+'<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Mi → Re♯ es una…',opts:['2ª mayor descendente','2ª menor descendente','3ª menor descendente'],ans:1,why:'Un semitono hacia abajo.'},{q:'Mi → Si (última pareja) es una…',opts:['4ª justa descendente','5ª justa descendente','3ª mayor descendente'],ans:0,why:'Mi5 a Si4: 5 semitonos hacia abajo.'},{q:'¿Es difícil de cantar un salto de tritono melódico?',opts:['Sí, es un intervalo melódicamente incómodo','No, es el más fácil'],ans:0,why:'Por eso se evita en melodías vocales clásicas.'}]);});
+S(5,'Análisis: dos voces',function(b,api){
+ b.innerHTML='<p>Analiza el intervalo armónico de cada pareja.</p>'+sbox(cstf('C4,G4 D4,F4 E4,C5 F4,B4 E4,D5 C4,C5',{gap:52,w:380,lab:['1','2','3','4','5','6']}))+'<div class="row" id="pl"></div><div id="mm"></div>';
+ b.querySelector('#pl').appendChild(playCols('Escuchar','C4,G4 D4,F4 E4,C5 F4,B4 E4,D5 C4,C5',900));
+ match(b.querySelector('#mm'),api,{head:'¿Perfecta, imperfecta o disonancia?',cats:['Perfecta','Imperfecta','Disonancia'],rows:[['Pareja 1 (Do–Sol)',0],['Pareja 2 (Re–Fa)',1],['Pareja 3 (Mi–Do)',1],['Pareja 4 (Fa–Si)',2],['Pareja 5 (Mi–Re)',2],['Pareja 6 (Do–Do)',0]].map(function(x){return {l:x[0],ans:x[1]};})});});
+S(5,'Análisis: la resolución de Sol7',function(b,api){
+ b.innerHTML='<p>Este fragmento muestra el tritono del acorde de Sol7 (Si–Fa) y su resolución a Do–Mi.</p>'+sbox(cstf('B4,F5 C5,E5',{gap:70,w:220}))+'<div id="pl"></div><div id="qq"></div>';
+ b.querySelector('#pl').appendChild(playCols('Escuchar','B4,F5 C5,E5',900));
+ quiz(b.querySelector('#qq'),api,[{q:'¿Qué intervalo forman Si y Fa?',opts:['5ª justa','4ª aumentada','5ª disminuida','7ª menor'],ans:2,why:'Si–Fa: abarca 5 letras y 6 semitonos.'},{q:'¿Cómo resuelven las dos notas?',opts:['Las dos suben','Si sube a Do y Fa baja a Mi','Las dos bajan'],ans:1,why:'Convergen en una 3ª mayor.'},{q:'¿Qué intervalo forma la resolución Do–Mi?',opts:['Consonancia imperfecta','Disonancia','Consonancia perfecta'],ans:0,why:'La tercera mayor es consonancia imperfecta.'}]);});
+/* ===== ETAPA 7 ===== */
+S(6,'Escribe terceras y sextas',function(b,api){
+ function mk(steps,txt,why){return {sig:0,cols:5,txt:txt,why:why,given:[5,6,7,6,5].map(function(s,c){return {c:c,s:s,a:0};}),check:expectCheck(steps.map(function(s){return {s:s,a:0};}))};}
+ entry(b,api,[mk([3,4,5,4,3],'La voz de arriba (azul) está dada. Escribe debajo de cada nota otra a una <b>3ª diatónica</b> inferior.','La–Si–Do–Si–La: terceras paralelas, que se aceptan.'),
+  mk([0,1,2,1,0],'Ahora escribe debajo de cada nota otra a una <b>6ª diatónica</b> inferior.','Mi–Fa–Sol–Fa–Mi: sextas paralelas, también aceptadas.')]);});
+S(6,'Escribe la resolución',function(b,api){
+ function mk(g,want,txt,why){return {sig:0,cols:2,nohit:[0],txt:txt,why:why,given:[{c:0,s:g,a:0}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===want&&n.a===0;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Piensa hacia dónde se mueve la nota y cuántos grados.'};}};}
+ entry(b,api,[mk(4,5,'La sensible <b>Si</b> está dada. Escribe en la columna 2 la nota a la que resuelve (en Do mayor).','La sensible sube un semitono a la tónica.'),mk(8,7,'La séptima <b>Fa</b> de Sol7 está dada. Escribe la nota a la que resuelve (en Do mayor).','La séptima baja un grado: Fa a Mi.')]);});
+S(6,'Compón una segunda voz',function(b,api){
+ b.innerHTML='<p>Escribe una voz superior sobre este bajo (azul). Reglas: usa solo consonancias (3ª, 5ª, 6ª y 8ª) sobre el bajo, empieza y termina con una consonancia perfecta, y evita quintas u octavas paralelas.</p>';
+ var bass=[-2,1,2,-2];
+ entry(b,api,[{sig:0,cols:4,txt:'Escribe 4 notas de la voz superior.',why:'Tu voz superior es correcta y está lista para escuchar con el botón.',given:bass.map(function(s,c){return {c:c,s:s,a:0};}),check:function(ns){
+  if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var bad=[],cls=[],ok=true,ic=[];
+  ns.forEach(function(n,i){var up=A.midOf(A.stepNote(n.s,n.a)),lo=A.midOf(A.stepNote(bass[i],0)),d=up-lo,pc=((d%12)+12)%12;ic.push(pc);
+   if(n.s<=bass[i]){cls[i]='bad';ok=false;bad.push('la nota '+(i+1)+' debe quedar por encima del bajo');}
+   else if([0,3,4,7,8,9].indexOf(pc)<0){cls[i]='bad';ok=false;bad.push('la nota '+(i+1)+' forma una disonancia o una 4ª con el bajo');}else cls[i]='';});
+  if([0,7].indexOf(ic[0])<0){ok=false;cls[0]='bad';bad.push('empieza con una 5ª o una 8ª');}
+  if([0,7].indexOf(ic[3])<0){ok=false;cls[3]='bad';bad.push('termina con una 5ª o una 8ª');}
+  for(var i=0;i<3;i++)if(ic[i]===ic[i+1]&&[0,7].indexOf(ic[i])>=0){ok=false;bad.push('hay quintas u octavas paralelas entre las notas '+(i+1)+' y '+(i+2));}
+  if(ok)cls=ns.map(function(){return 'ok';});return {ok:ok,cls:cls,msg:'Revisa: '+bad.join('; ')+'.'};}}]);});
+/* ===== ETAPA 8 ===== */
+S(7,'Consonancia y afinación',function(b,api){
+ b.innerHTML='<p>El piano está afinado con temperamento igual: se reparte la diferencia entre intervalos puros. Como resultado, todas las quintas son un poco más estrechas que las puras y las terceras mayores son bastante más anchas. Los afinadores se guían por los «batidos», pulsaciones que se oyen cuando dos notas casi coinciden.</p><div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'En el piano afinado con temperamento igual, la quinta suena…',opts:['Un poco más estrecha que la pura','Mucho más ancha','Exactamente pura'],ans:0,why:'Se estrecha ligeramente para que todos los intervalos encajen.'},{q:'Un afinador utiliza…',opts:['Los batidos entre notas','Solo el volumen','El pedal'],ans:0,why:'Cuenta las pulsaciones entre dos notas para ajustar la cuerda.'}]);});
+S(7,'Usar la tensión al interpretar y componer',function(b,api){
+ b.innerHTML='<div id="qq"></div>';
+ quiz(b.querySelector('#qq'),api,[{q:'Quieres un final firme y tranquilo.',opts:['Terminar en un acorde disonante','Terminar en la tónica con 5ª y 8ª','Terminar en un tritono'],ans:1,why:'Una consonancia perfecta transmite reposo.'},{q:'Quieres que el oyente espere lo siguiente.',opts:['Un acorde de dominante con séptima','Una octava sola','Un unísono'],ans:0,why:'La disonancia crea expectativa.'},{q:'Al tocar una disonancia, el intérprete suele…',opts:['Darle peso y dirigirla hacia su resolución','Tocarla igual que el resto','Ocultarla'],ans:0,why:'La tensión se enfatiza y se relaja al resolver.'}]);});
+S(7,'Evaluación final del tema',function(b,api){quiz(b,api,[
+ {q:'¿Cuál es una consonancia perfecta?',opts:['3ª mayor','5ª justa','6ª menor','7ª menor'],ans:1,why:'Las perfectas son unísono, 5ª y 8ª.'},
+ {q:'¿Cuál es una consonancia imperfecta?',opts:['6ª mayor','4ª aumentada','2ª mayor'],ans:0,why:'Las terceras y sextas son imperfectas.'},
+ {q:'El tritono se resuelve…',opts:['Moviendo las dos voces a una consonancia','Dejándolo quieto','Saltando una octava'],ans:0,why:'Convergen a una 3ª o se abren a una 6ª.'},
+ {q:'Las quintas paralelas se evitan porque…',opts:['Suenan demasiado fuerte','Las voces pierden independencia','No existen'],ans:1,why:'Dos voces en quintas suenan como una sola.'},
+ {q:'¿Qué época aceptó la 3ª y la 6ª como consonancias?',opts:['Renacimiento','Edad Media','Siglo XX'],ans:0,why:'Fue una gran novedad del Renacimiento.'},
+ {q:'En el acorde de Sol7 (Sol–Si–Re–Fa), la séptima baja a…',opts:['Mi','Sol','La'],ans:0,why:'Fa baja un grado, a Mi.'},
+ {q:'La 4ª justa contra el bajo se trata como…',opts:['Consonancia','Disonancia en contrapunto estricto','Disonancia perfecta'],ans:1,why:'Por eso se cuida su colocación.'}]);});
+window.AH_LESSON.TOPICS[4]=STEPS;
+})();
+
+(function(){'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n),l:n.l,o:n.o};}
+function mids(list){return list.split(' ').map(function(x){return N(x).m;});}
+function pm(list){return mids(list).join(',');}
+function pc(cols){return cols.split(' ').map(function(c){return pm(c.replace(/,/g,' '));}).join(';');}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:list.split(' ').map(function(x,i){var n=N(x);return {s:n.s,a:n.a,open:o.open!==false,stem:!!o.stem,lab:o.lab?o.lab[i]:undefined};})});}
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function pb(label,kind,payload,dt){return '<button class="btn ghost sm" data-p="'+kind+'|'+(dt||'')+'|'+payload+'">▶ '+label+'</button>';}
+function wire(b){[].forEach.call(b.querySelectorAll('[data-rh]'),function(x){x.onclick=function(){if(window.AH_RH)window.AH_RH(x.getAttribute('data-rh'),b,x.dataset.ts?x.dataset.ts.split('/').map(Number):null);};});[].forEach.call(b.querySelectorAll('[data-p]'),function(x){x.onclick=function(){var p=x.getAttribute('data-p').split('|'),k=p[0],dt=p[1]?+p[1]:0,pl=p[2];
+ if(k==='chord')A.chord(pl.split(',').map(Number),1.8);else if(k==='seq')A.seq(pl.split(',').map(Number),dt||.4);else if(k==='chords')A.chords(pl.split(';').map(function(c){return c.split(',').map(Number);}),dt>20?dt/1000:(dt||.9));};});}
+function RQ(st,ti,html,qs){var has=qs&&qs.length;S(st,ti,function(b,api){b.innerHTML=html+(has?'<div id="qq" style="margin-top:14px"></div>':'');wire(b);if(has)quiz(b.querySelector('#qq'),api,qs);},!has);}
+function KB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);kbBuild(b,api,rounds);});}
+function ENT(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);entry(b,api,rounds);});}
+function MT(st,ti,intro,head,cats,rows){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);match(w,api,{head:head,cats:cats,rows:rows.map(function(x){return {l:x[0],ans:x[1]};})});});}
+function NE(st,ti,intro,rounds){ENT(st,ti,intro,rounds.map(function(r){var g=N(r.g),w=N(r.w),sig=r.sig||0;return {sig:sig,cols:2,nohit:[0],txt:r.txt,why:r.why,given:[{c:0,s:g.s,a:g.a}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===w.s&&n.a===w.a;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Revisa el número (contando letras) y la calidad (contando semitonos).'};}};}));}
+function EXP(sig,list,txt,why,extra){var ns=list.split(' ').map(N);var o={sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns.map(function(n){return {s:n.s,a:n.a};}))};if(extra)for(var k in extra)o[k]=extra[k];return o;}
+/* acordes */
+var QI={M:[0,4,7],m:[0,3,7],d:[0,3,6],a:[0,4,8],M7:[0,4,7,11],m7:[0,3,7,10],D7:[0,4,7,10],h7:[0,3,6,10],d7:[0,3,6,9],mM7:[0,3,7,11]};
+var QS={M:'',m:'m',d:'°',a:'+',M7:'maj7',m7:'m7',D7:'7',h7:'m7♭5',d7:'°7',mM7:'m(maj7)'};
+function K(l,a,type,o,inv){return {l:l,a:a,t:type,o:o,i:inv||0};}
+function spell(k){var iv=QI[k.t],i0=A.LET.indexOf(k.l),base=A.PC[k.l]+k.a+12*(k.o+1),out=[];iv.forEach(function(x,j){var q=i0+2*j,li=q%7,oo=k.o+Math.floor(q/7);out.push({l:A.LET[li],a:base+x-(A.PC[A.LET[li]]+12*(oo+1)),o:oo});});
+ for(var r=0;r<k.i;r++){var f=out.shift();f.o+=1;out.push(f);}return out;}
+function chm(k){return spell(k).map(A.midOf);}
+function chs(specs,o){o=o||{};var ns=[];specs.forEach(function(k,ci){spell(k).forEach(function(n,j){ns.push({c:ci,s:A.stpOf(n),a:n.a,open:o.open!==false,lab:(j===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||56,notes:ns,cols:specs.length,bar:true,w:o.w});}
+function cif(k){return k.l+A.accS(k.a)+QS[k.t]+(k.i?'/'+(function(){var n=spell(k)[0];return n.l+A.accS(n.a);})():'');}
+function chp(specs,dt){return pb('Escuchar','chords',specs.map(function(k){return chm(k).join(',');}).join(';'),dt||1000);}
+function chb(k){return pb(cif(k),'chord',chm(k).join(','));}
+function ARP(sig,k,txt,why){var ns=spell(k).map(function(n){return {s:A.stpOf(n),a:n.a};});return {sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns)};}
+
+var Q3=function(f){return {pre:cstf(f,{gap:60,w:200})};};
+function IQ(cols,opts,ans,why,q){var o=Q3(cols);o.q=q||'¿Qué intervalo es?';o.opts=opts;o.ans=ans;o.why=why;return o;}
+/* E1 */
+RQ(0,'Qué es un intervalo','<div class="def"><b>Intervalo:</b> distancia entre dos sonidos. Se nombra con un <b>número</b> (cuántas notas abarca, contando las dos) y una <b>calidad</b> (mayor, menor, justa, aumentada o disminuida).</div><p>Do–Mi abarca tres notas (Do, Re, Mi): es una tercera. Como tiene 4 semitonos, es una tercera <b>mayor</b>.</p>'+sbox(cstf('C4,E4',{gap:60,w:200}))+'<div class="row">'+pb('Juntas','chord','60,64')+pb('Una tras otra','seq','60,64',.6)+'</div>',
+ [{q:'¿Cuántas notas abarca Re–La, contando ambas?',opts:['4','5','6'],ans:1,why:'Re Mi Fa Sol La: es una quinta.'},{q:'¿Qué dos datos nombran un intervalo?',opts:['Número y calidad','Compás y tempo','Clave y armadura'],ans:0,why:'Por ejemplo, «tercera mayor».'}]);
+S(0,'Intervalos diatónicos',function(b,api){
+ b.innerHTML='<p>Un intervalo es <b>diatónico</b> cuando sus dos notas pertenecen a la misma escala. Desde la tónica de Do mayor, todos los intervalos son mayores o justos. Toca cada tecla y mira el intervalo que forma con Do. Prueba 5.</p>';
+ var nm={0:'Unísono (1ª justa)',2:'2ª mayor',4:'3ª mayor',5:'4ª justa',7:'5ª justa',9:'6ª mayor',11:'7ª mayor',12:'8ª justa'},seen={},info=el('<div class="info">Toca una tecla blanca.</div>'),K=mkKb(b,60,72,function(m){A.chord([60,m],1.6);var d=m-60;if(nm[d]===undefined){info.innerHTML='Esa tecla no es de Do mayor.';return;}info.innerHTML='<b style="color:#fff;font-family:var(--disp);font-size:1.3rem">'+nm[d]+'</b><br>'+d+' semitono'+(d===1?'':'s');seen[d]=1;if(Object.keys(seen).length>=5)api.done();});b.appendChild(info);});
+RQ(0,'Intervalos simples y compuestos','<p>Los intervalos hasta la octava son <b>simples</b>. Los mayores que una octava son <b>compuestos</b> y se pueden reducir restando 7 al número: una 9ª es una 2ª compuesta, una 10ª es una 3ª compuesta.</p>'+table([['9ª','2ª + octava'],['10ª','3ª + octava'],['12ª','5ª + octava'],['13ª','6ª + octava']],['Compuesto','Equivale a']),
+ [{q:'Una 10ª equivale a…',opts:['Una 2ª compuesta','Una 3ª compuesta','Una 5ª compuesta'],ans:1,why:'10 − 7 = 3.'},{q:'La octava es un intervalo…',opts:['Simple','Compuesto'],ans:0,why:'Es el límite de los intervalos simples.'}]);
+/* E2 */
+RQ(1,'Las calidades','<p>La calidad depende de los semitonos. Los intervalos 1ª, 4ª, 5ª y 8ª son <b>justos</b>; los de 2ª, 3ª, 6ª y 7ª son <b>mayores</b> o <b>menores</b>.</p>'+table([['2ª','1 (menor)','2 (mayor)'],['3ª','3 (menor)','4 (mayor)'],['6ª','8 (menor)','9 (mayor)'],['7ª','10 (menor)','11 (mayor)'],['1ª, 4ª, 5ª, 8ª','0, 5, 7, 12 (justas)','']],['Número','Semitonos (menor)','Semitonos (mayor)'])+'<p class="lbl" style="margin-top:8px">Un semitono más que mayor o justa es <b>aumentado</b>. Uno menos que menor o justa es <b>disminuido</b>.</p>',
+ [{q:'Una 5ª con 7 semitonos es…',opts:['Disminuida','Justa','Aumentada'],ans:1,why:'7 semitonos: quinta justa.'},{q:'Una 3ª con 3 semitonos es…',opts:['Mayor','Menor','Justa'],ans:1,why:'La tercera menor tiene 3 semitonos.'}]);
+MT(1,'Clasifica por calidad','<p>Identifica la calidad de cada intervalo ascendente.</p>','¿Qué calidad tiene?',['Mayor','Menor','Justa','Aumentada','Disminuida'],[['Do–Mi',0],['Re–Fa',1],['Fa–Do',2],['Do–Fa♯',3],['Si–Fa',4],['Mi–Do',1],['Sol–Fa',1]]);
+RQ(1,'Intervalos entre los grados','<p>Desde la tónica, la escala mayor solo da intervalos mayores y justos. Entre otros grados aparecen los menores:</p>'+sbox(cstf('E4,F4 F4,A4 B4,D5 F4,B4',{gap:60,w:300,lab:['2ª m','3ª M','3ª m','4ª aum']}))+'<div class="row">'+pb('Escuchar','chords',pc('E4,F4 F4,A4 B4,D5 F4,B4'),1100)+'</div>',
+ [IQ('E4,F4',['2ª mayor','2ª menor','3ª menor'],1,'Mi–Fa es un semitono natural.'),IQ('F4,A4',['3ª menor','3ª mayor','4ª justa'],1,'Fa–La: 4 semitonos.'),IQ('B4,D5',['3ª mayor','3ª menor','2ª mayor'],1,'Si–Re: 3 semitonos.'),IQ('F4,B4',['4ª justa','4ª aumentada','5ª disminuida'],1,'Es el tritono de la tonalidad de Do mayor.')]);
+RQ(1,'Consonantes y disonantes en la tonalidad','<p>Dentro de una tonalidad, los intervalos se agrupan así:</p>'+table([['Consonantes perfectos','1ª, 5ª y 8ª justas'],['Consonantes imperfectos','3ª y 6ª, mayores y menores'],['Disonantes','2ª, 7ª, 4ª aumentada y 5ª disminuida'],['Caso especial','4ª justa']],['Grupo','Intervalos']),
+ [{q:'Si–Fa en Do mayor es…',opts:['Consonancia perfecta','Consonancia imperfecta','Disonancia (tritono)'],ans:2,why:'Si–Fa es una 5ª disminuida.'},{q:'Do–La es…',opts:['Consonancia imperfecta','Disonancia'],ans:0,why:'Una 6ª mayor es consonancia imperfecta.'}]);
+RQ(1,'Inversión de intervalos','<div class="def"><b>Invertir</b> un intervalo es subir su nota inferior una octava (o bajar la superior).<br>Los números suman 9. La calidad se invierte: mayor ↔ menor, aumentada ↔ disminuida, justa ↔ justa.</div>'+table([['2ª ↔ 7ª','mayor ↔ menor'],['3ª ↔ 6ª','mayor ↔ menor'],['4ª ↔ 5ª','justa ↔ justa'],['aumentada ↔ disminuida','']],['Números','Calidades'])+sbox(cstf('C4,E4 E4,C5',{gap:70,w:220,lab:['3ª M','6ª m']}))+'<div class="row">'+pb('Escuchar','chords',pc('C4,E4 E4,C5'),1100)+'</div>',
+ [{q:'La inversión de una 3ª mayor es una…',opts:['6ª menor','6ª mayor','5ª justa'],ans:0,why:'3 + 6 = 9 y mayor pasa a menor.'},{q:'La inversión de una 5ª justa es una…',opts:['4ª justa','4ª aumentada','6ª justa'],ans:0,why:'5 + 4 = 9 y la justa sigue siendo justa.'},{q:'La inversión de una 7ª mayor es una…',opts:['2ª mayor','2ª menor','3ª menor'],ans:1,why:'7 + 2 = 9 y mayor pasa a menor.'}]);
+/* E3 */
+NE(2,'Escribe el intervalo','<p>Escribe la nota superior del intervalo pedido. La nota inferior está dada (azul).</p>',[
+ {g:'F4',w:'A4',txt:'Escribe la <b>3ª mayor</b> sobre Fa.',why:'Fa–La: 4 semitonos.'},
+ {g:'D4',w:'F#4',txt:'Escribe la <b>3ª mayor</b> sobre Re.',why:'Re–Fa♯. Necesita sostenido para tener 4 semitonos.'},
+ {g:'E4',w:'C5',txt:'Escribe la <b>6ª menor</b> sobre Mi.',why:'Mi–Do: 8 semitonos.'},
+ {g:'B4',w:'F5',txt:'Escribe la <b>5ª disminuida</b> sobre Si.',why:'Si–Fa: 6 semitonos.'},
+ {g:'G4',w:'F5',txt:'Escribe la <b>7ª menor</b> sobre Sol.',why:'Sol–Fa: 10 semitonos.'}]);
+KB(2,'Intervalos en el teclado','<p>Cuenta semitonos desde la nota indicada.</p>',[{pcs:[7,10],n:2,txt:'Sol y su 3ª menor',why:'Sol–Si♭: 3 semitonos.'},{pcs:[4,1],n:2,txt:'Mi y su 6ª mayor',why:'Mi–Do♯: 9 semitonos.'},{pcs:[5,4],n:2,txt:'Fa y su 7ª mayor',why:'Fa–Mi: 11 semitonos.'},{pcs:[2,10],n:2,txt:'Re y su 5ª aumentada',why:'Re–La♯: 8 semitonos.'}]);
+NE(2,'Invierte el intervalo','<p>Invierte cada intervalo: la nota dada es la inferior del intervalo invertido.</p>',[
+ {g:'E4',w:'C5',txt:'Do–Mi es una 3ª mayor. Su inversión es Mi–<b>?</b>. Escribe la nota superior.',why:'Mi–Do es una 6ª menor.'},
+ {g:'A4',w:'D5',txt:'Re–La es una 5ª justa. Su inversión es La–<b>?</b>.',why:'La–Re es una 4ª justa.'},
+ {g:'B4',w:'F5',txt:'Fa–Si es una 4ª aumentada. Su inversión es Si–<b>?</b>.',why:'Si–Fa es una 5ª disminuida.'},
+ {g:'B4',w:'C5',txt:'Do–Si es una 7ª mayor. Su inversión es Si–<b>?</b>.',why:'Si–Do es una 2ª menor.'}]);
+RQ(2,'Método para calcular un intervalo','<div class="def"><b>1.</b> Cuenta las letras: da el número.<br><b>2.</b> Cuenta los semitonos: da la calidad.</div>',[
+ IQ('G4,E5',['6ª mayor','6ª menor','7ª menor'],0,'Sol–Mi: 6 letras y 9 semitonos.'),IQ('D4,A4',['5ª disminuida','5ª justa','5ª aumentada'],1,'Re–La: 7 semitonos.'),IQ('C4,Bb4',['7ª mayor','7ª menor','6ª mayor'],1,'Do–Si♭: 10 semitonos.'),IQ('A4,F5',['6ª mayor','6ª menor','5ª aumentada'],1,'La–Fa: 8 semitonos.')]);
+/* E4 */
+RQ(3,'Reglas: cómo cambia la calidad','<p>Si alteras una de las notas, la calidad cambia con una escalera:</p><div class="def"><b>Intervalos mayores/menores:</b> disminuido ← menor ← mayor → aumentado<br><b>Intervalos justos:</b> disminuido ← justo → aumentado</div><p>Ejemplo: Do–Mi es 3ª mayor. Si bajas el Mi a Mi♭, pasa a 3ª menor. Si bajas más, a Mi♭♭, sería disminuida.</p>',
+ [{q:'Do–Sol es una 5ª justa. Do–Sol♯ es…',opts:['Aumentada','Mayor','Disminuida'],ans:0,why:'Sube un semitono sobre justa.'},{q:'Re–Fa es una 3ª menor. Re–Fa♯ es…',opts:['3ª mayor','3ª aumentada','3ª disminuida'],ans:0,why:'Un semitono más que menor es mayor.'},{q:'Si–Fa es una 5ª disminuida. Si–Fa♯ es…',opts:['5ª justa','5ª aumentada','4ª justa'],ans:0,why:'Sube un semitono sobre disminuida: justa.'}]);
+RQ(3,'Excepciones: intervalos enarmónicos','<p>Dos intervalos pueden sonar igual y escribirse distinto. Son <b>enarmónicos</b>. El número se decide por las letras:</p>'+table([['Do–Fa♯','4ª aumentada','6 semitonos'],['Do–Sol♭','5ª disminuida','6 semitonos'],['Do–La','6ª mayor','9 semitonos'],['Do–Si♭♭','7ª disminuida','9 semitonos']],['Intervalo','Nombre','Suena'])+'<div class="row">'+pb('Do–Fa♯','chord','60,66')+pb('Do–Sol♭','chord','60,66')+'</div>',
+ [{q:'Do–Fa♯ y Do–Sol♭ suenan…',opts:['Igual, pero se escriben distinto','Distinto','Una octava aparte'],ans:0,why:'Son el tritono, escrito como 4ª aumentada o 5ª disminuida.'},{q:'Lo que decide el número del intervalo es…',opts:['El nombre de las letras','El sonido solo'],ans:0,why:'Fa♯ está en la 4ª letra y Sol♭ en la 5ª.'}]);
+RQ(3,'Intervalos compuestos','<p>Para nombrar un intervalo compuesto, resta 7 al número y conserva la calidad. Una 9ª mayor es una 2ª mayor más una octava. Una 11ª justa es una 4ª justa más una octava.</p><div class="row">'+pb('9ª mayor (Do–Re)','chord','48,62')+pb('2ª mayor','chord','60,62')+'</div>',
+ [{q:'Una 9ª mayor equivale a una…',opts:['2ª mayor compuesta','3ª mayor compuesta','7ª mayor'],ans:0,why:'9 − 7 = 2.'},{q:'Una 11ª justa equivale a una…',opts:['3ª compuesta','4ª justa compuesta','5ª justa compuesta'],ans:1,why:'11 − 7 = 4.'}]);
+/* E5 */
+RQ(4,'Intervalos en canciones','<p>Reconocer intervalos por canciones ayuda al oído. Referencias:</p>'+table([['2ª mayor ascendente','Fray Santiago (Do–Re–Mi)'],['5ª justa ascendente','Estrellita, ¿dónde estás? (Do–Do–Sol–Sol)'],['3ª menor descendente','Motivo de la Quinta sinfonía de Beethoven (Sol–Sol–Sol–Mi♭)'],['4ª justa ascendente','Marcha nupcial de Wagner («Aquí viene la novia»)']],['Intervalo','Pieza']),null);
+RQ(4,'Oído: 3ª y 5ª','<p>Escucha estos intervalos sobre Do.</p>',[
+ {q:'¿Cuál es la 3ª menor?',audio:[{l:'A',mode:'chord',m:[60,63]},{l:'B',mode:'chord',m:[60,64]}],opts:['A','B'],ans:0,why:'Do–Mi♭ tiene 3 semitonos.'},
+ {q:'¿Cuál es la 5ª justa?',audio:[{l:'A',mode:'chord',m:[60,65]},{l:'B',mode:'chord',m:[60,67]}],opts:['A','B'],ans:1,why:'Do–Sol: 7 semitonos. Do–Fa es una cuarta.'},
+ {q:'¿Cuál es la 6ª mayor?',audio:[{l:'A',mode:'chord',m:[60,68]},{l:'B',mode:'chord',m:[60,69]}],opts:['A','B'],ans:1,why:'Do–La: 9 semitonos.'}]);
+RQ(4,'Oído: melódicos','<p>Escucha cada intervalo como melodía (una nota tras otra).</p>',[
+ {q:'¿Sube o baja?',audio:[{l:'Escuchar',m:[67,60],dt:.6}],opts:['Sube','Baja'],ans:1,why:'Va de Sol a Do, hacia abajo.'},
+ {q:'¿Qué intervalo es?',audio:[{l:'Escuchar',m:[60,62],dt:.6}],opts:['2ª mayor','3ª mayor','4ª justa'],ans:0,why:'Do–Re: 2 semitonos.'},
+ {q:'¿Qué intervalo es?',audio:[{l:'Escuchar',m:[60,67],dt:.6}],opts:['4ª justa','5ª justa','6ª mayor'],ans:1,why:'Do–Sol: 7 semitonos.'}]);
+/* E6 */
+MT(5,'Análisis: las terceras de Do mayor','<p>En la escala de Do mayor, las terceras no son todas iguales.</p>'+sbox(cstf('C4,E4 D4,F4 E4,G4 F4,A4 G4,B4 A4,C5 B4,D5',{gap:50,w:400,lab:['I','II','III','IV','V','VI','VII']}))+'<div class="row">'+pb('Escuchar','chords',pc('C4,E4 D4,F4 E4,G4 F4,A4 G4,B4 A4,C5 B4,D5'),700)+'</div>','¿3ª mayor o menor?',['3ª mayor','3ª menor'],[['Do–Mi (I–III)',0],['Re–Fa (II–IV)',1],['Mi–Sol (III–V)',1],['Fa–La (IV–VI)',0],['Sol–Si (V–VII)',0],['La–Do (VI–I)',1],['Si–Re (VII–II)',1]]);
+RQ(5,'Análisis: Himno de la alegría','<p>Los primeros sonidos del tema de Beethoven en Re mayor (armadura de 2♯).</p>'+sbox(stf('F#4 F#4 G4 A4 A4 G4 F#4 E4',{sig:2,gap:44,stem:true,open:false,lab:['Fa♯','Fa♯','Sol','La','La','Sol','Fa♯','Mi']})),
+ [{q:'Fa♯ → Sol es una…',opts:['2ª menor','2ª mayor','3ª menor'],ans:0,why:'Un semitono.'},{q:'Sol → La es una…',opts:['2ª menor','2ª mayor','3ª mayor'],ans:1,why:'Dos semitonos.'},{q:'De la tónica Re al primer sonido (Fa♯), el intervalo es una…',opts:['3ª menor','3ª mayor','4ª justa'],ans:1,why:'Re–Fa♯: 4 semitonos, tercera mayor.'}]);
+RQ(5,'Análisis: intervalos dentro de un acorde','<p>Un acorde se puede analizar por los intervalos que forman sus notas. Este es Do–Mi–Sol–Si.</p>'+sbox(cstf('C4,E4,G4,B4',{gap:60,w:200})),
+ [{q:'Do–Sol es una…',opts:['5ª justa','6ª menor','4ª justa'],ans:0,why:'7 semitonos.'},{q:'Mi–Sol es una…',opts:['3ª mayor','3ª menor','2ª mayor'],ans:1,why:'3 semitonos.'},{q:'Do–Si es una…',opts:['7ª menor','7ª mayor','6ª mayor'],ans:1,why:'11 semitonos.'},{q:'Sol–Si es una…',opts:['3ª mayor','3ª menor','4ª justa'],ans:0,why:'4 semitonos.'}]);
+/* E7 */
+NE(6,'Escribe intervalos con armadura','<p>En Re mayor la armadura tiene Fa♯ y Do♯. Escribe la nota superior sin añadir alteraciones si ya están en la armadura.</p>',[
+ {g:'D4',w:'F#4',sig:2,txt:'Escribe la <b>3ª mayor</b> sobre Re.',why:'El Fa♯ lo da la armadura.'},
+ {g:'E4',w:'G4',sig:2,txt:'Escribe la <b>3ª menor</b> sobre Mi.',why:'Mi–Sol: 3 semitonos.'},
+ {g:'A4',w:'C#5',sig:2,txt:'Escribe la <b>3ª mayor</b> sobre La.',why:'El Do♯ lo da la armadura.'}]);
+ENT(6,'Dictado de melodía por intervalos','<p>Escribe la melodía partiendo de la nota inicial, siguiendo los intervalos.</p>',[
+ EXP(0,'C4 E4 D4 G4','Do4, 3ª mayor arriba, 2ª mayor abajo, 4ª justa arriba.','Do–Mi–Re–Sol.'),
+ EXP(0,'G4 D5 B4 C#5','Sol4, 5ª justa arriba, 3ª menor abajo, 2ª mayor arriba.','Sol–Re–Si–Do♯ (con sostenido).')]);
+S(6,'Compón una melodía con saltos',function(b,api){
+ b.innerHTML='<p>Escribe 5 notas en Do mayor (sin armadura). Reglas: usa solo notas de la escala, termina en Do, incluye un salto de 4ª o de 5ª justa y ningún salto mayor que una 6ª.</p>';
+ entry(b,api,[{sig:0,cols:5,txt:'Escribe tu melodía.',why:'Una melodía diatónica con un salto característico.',check:function(ns){
+  if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var bad=[],cls=[],ok=true,leap=false,ms=ns.map(function(n){return A.midOf(A.stepNote(n.s,n.a));});
+  ms.forEach(function(m,i){if([0,2,4,5,7,9,11].indexOf(m%12)<0){ok=false;cls[i]='bad';bad.push('la nota '+(i+1)+' no es de Do mayor');}else cls[i]='';});
+  if(ms[4]%12!==0){ok=false;cls[4]='bad';bad.push('debe terminar en Do');}
+  for(var i=0;i<4;i++){var d=Math.abs(ms[i+1]-ms[i]);if(d===5||d===7)leap=true;if(d>9){ok=false;bad.push('el salto entre las notas '+(i+1)+' y '+(i+2)+' es demasiado grande');}}
+  if(!leap){ok=false;bad.push('falta un salto de 4ª o 5ª justa');}
+  if(ok)cls=ns.map(function(){return 'ok';});return {ok:ok,cls:cls,msg:'Revisa: '+bad.join('; ')+'.'};}}]);});
+/* E8 */
+RQ(7,'Leer por intervalos','<p>Leer por intervalos es más rápido que nombrar cada nota. Si dos notas están en <b>línea y espacio vecinos</b>, es una 2ª. Si están en <b>líneas consecutivas</b> o en <b>espacios consecutivos</b>, es una 3ª.</p>'+sbox(cstf('E4,F4 E4,G4 F4,A4',{gap:70,w:260,lab:['2ª','3ª','3ª']})),
+ [{q:'Dos notas en líneas consecutivas forman…',opts:['Una 2ª','Una 3ª','Una 4ª'],ans:1,why:'Saltas una nota intermedia.'},{q:'Una nota en una línea y otra en el espacio de al lado forman…',opts:['Una 2ª','Una 3ª','Una 5ª'],ans:0,why:'Son notas vecinas.'}]);
+RQ(7,'Evaluación final del tema','',[
+ {q:'¿Qué intervalo hay entre Mi y Do (ascendente)?',opts:['6ª menor','6ª mayor','5ª justa'],ans:0,why:'8 semitonos y 6 letras.'},
+ {q:'La inversión de una 4ª aumentada es una…',opts:['5ª disminuida','5ª justa','4ª justa'],ans:0,why:'4 + 5 = 9 y aumentada pasa a disminuida.'},
+ {q:'Una 9ª es una…',opts:['2ª compuesta','7ª simple','3ª compuesta'],ans:0,why:'9 − 7 = 2.'},
+ {q:'Un semitono más que una 3ª mayor da una 3ª…',opts:['Aumentada','Menor','Disminuida'],ans:0,why:'Mayor → aumentada.'},
+ {q:'Do–Fa♯ es una…',opts:['5ª disminuida','4ª aumentada','4ª justa'],ans:1,why:'Fa♯ está en la 4ª letra.'},
+ {q:'Si–Fa en Do mayor es…',opts:['Un intervalo disonante','Una consonancia perfecta'],ans:0,why:'Es el tritono (5ª disminuida).'}]);
+
+window.AH_LESSON.TOPICS[5]=STEPS;
+})();
+(function(){'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n),l:n.l,o:n.o};}
+function mids(list){return list.split(' ').map(function(x){return N(x).m;});}
+function pm(list){return mids(list).join(',');}
+function pc(cols){return cols.split(' ').map(function(c){return pm(c.replace(/,/g,' '));}).join(';');}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:list.split(' ').map(function(x,i){var n=N(x);return {s:n.s,a:n.a,open:o.open!==false,stem:!!o.stem,lab:o.lab?o.lab[i]:undefined};})});}
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function pb(label,kind,payload,dt){return '<button class="btn ghost sm" data-p="'+kind+'|'+(dt||'')+'|'+payload+'">▶ '+label+'</button>';}
+function wire(b){[].forEach.call(b.querySelectorAll('[data-rh]'),function(x){x.onclick=function(){if(window.AH_RH)window.AH_RH(x.getAttribute('data-rh'),b,x.dataset.ts?x.dataset.ts.split('/').map(Number):null);};});[].forEach.call(b.querySelectorAll('[data-p]'),function(x){x.onclick=function(){var p=x.getAttribute('data-p').split('|'),k=p[0],dt=p[1]?+p[1]:0,pl=p[2];
+ if(k==='chord')A.chord(pl.split(',').map(Number),1.8);else if(k==='seq')A.seq(pl.split(',').map(Number),dt||.4);else if(k==='chords')A.chords(pl.split(';').map(function(c){return c.split(',').map(Number);}),dt>20?dt/1000:(dt||.9));};});}
+function RQ(st,ti,html,qs){var has=qs&&qs.length;S(st,ti,function(b,api){b.innerHTML=html+(has?'<div id="qq" style="margin-top:14px"></div>':'');wire(b);if(has)quiz(b.querySelector('#qq'),api,qs);},!has);}
+function KB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);kbBuild(b,api,rounds);});}
+function ENT(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);entry(b,api,rounds);});}
+function MT(st,ti,intro,head,cats,rows){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);match(w,api,{head:head,cats:cats,rows:rows.map(function(x){return {l:x[0],ans:x[1]};})});});}
+function NE(st,ti,intro,rounds){ENT(st,ti,intro,rounds.map(function(r){var g=N(r.g),w=N(r.w),sig=r.sig||0;return {sig:sig,cols:2,nohit:[0],txt:r.txt,why:r.why,given:[{c:0,s:g.s,a:g.a}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===w.s&&n.a===w.a;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Revisa el número (contando letras) y la calidad (contando semitonos).'};}};}));}
+function EXP(sig,list,txt,why,extra){var ns=list.split(' ').map(N);var o={sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns.map(function(n){return {s:n.s,a:n.a};}))};if(extra)for(var k in extra)o[k]=extra[k];return o;}
+/* acordes */
+var QI={M:[0,4,7],m:[0,3,7],d:[0,3,6],a:[0,4,8],M7:[0,4,7,11],m7:[0,3,7,10],D7:[0,4,7,10],h7:[0,3,6,10],d7:[0,3,6,9],mM7:[0,3,7,11]};
+var QS={M:'',m:'m',d:'°',a:'+',M7:'maj7',m7:'m7',D7:'7',h7:'m7♭5',d7:'°7',mM7:'m(maj7)'};
+function K(l,a,type,o,inv){return {l:l,a:a,t:type,o:o,i:inv||0};}
+function spell(k){var iv=QI[k.t],i0=A.LET.indexOf(k.l),base=A.PC[k.l]+k.a+12*(k.o+1),out=[];iv.forEach(function(x,j){var q=i0+2*j,li=q%7,oo=k.o+Math.floor(q/7);out.push({l:A.LET[li],a:base+x-(A.PC[A.LET[li]]+12*(oo+1)),o:oo});});
+ for(var r=0;r<k.i;r++){var f=out.shift();f.o+=1;out.push(f);}return out;}
+function chm(k){return spell(k).map(A.midOf);}
+function chs(specs,o){o=o||{};var ns=[];specs.forEach(function(k,ci){spell(k).forEach(function(n,j){ns.push({c:ci,s:A.stpOf(n),a:n.a,open:o.open!==false,lab:(j===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||56,notes:ns,cols:specs.length,bar:true,w:o.w});}
+function cif(k){return k.l+A.accS(k.a)+QS[k.t]+(k.i?'/'+(function(){var n=spell(k)[0];return n.l+A.accS(n.a);})():'');}
+function chp(specs,dt){return pb('Escuchar','chords',specs.map(function(k){return chm(k).join(',');}).join(';'),dt||1000);}
+function chb(k){return pb(cif(k),'chord',chm(k).join(','));}
+function ARP(sig,k,txt,why){var ns=spell(k).map(function(n){return {s:A.stpOf(n),a:n.a};});return {sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns)};}
+
+/* ===== render de ritmo ===== */
+var DUR={w:4,h:2,q:1,e:.5,s:.25};
+function parse(str){return (str||'').trim().split(/\s+/).filter(Boolean).map(function(t){var r=/r$/.test(t),dot=/\./.test(t),k=t.replace(/[r.]/g,'');return {k:k,r:r,dot:dot,d:DUR[k]*(dot?1.5:1),t:t};});}
+function rh(str,o){o=o||{};var it=parse(str),ts=o.ts,u=o.u||44,x0=ts?54:20,bl=ts?ts[0]*4/ts[1]:0,bg=ts&&ts[1]===8&&ts[0]%3===0?1.5:1,cur=x0,pos=0,L=46,xs=[],out='',bars='',i;
+ var gi=[],g=null;
+ it.forEach(function(n,k){var wd=Math.max(n.d*u,24);n.x=cur+10;xs.push(n.x);n.pos=pos;cur+=wd;pos+=n.d;
+  if(bl&&Math.abs(pos/bl-Math.round(pos/bl))<1e-6&&pos>0){var last=k===it.length-1;bars+='<line x1="'+(cur+2)+'" y1="32" x2="'+(cur+2)+'" y2="60" stroke="currentColor" stroke-width="1.5"/>'+(last&&o.end?'<line x1="'+(cur+6)+'" y1="32" x2="'+(cur+6)+'" y2="60" stroke="currentColor" stroke-width="3"/>':'');cur+=12;}});
+ var W=cur+12;
+ it.forEach(function(n){var x=n.x,s='',beamed=false;
+  if(n.r){var k=n.k;
+   if(k==='q')s='<path d="M'+(x-3)+',33 l6,7 -5,5 5,6 -3,4" fill="none" stroke="currentColor" stroke-width="2"/>';
+   else if(k==='e')s='<circle cx="'+(x-2)+'" cy="40" r="2.3" fill="currentColor"/><path d="M'+(x+3)+',36 L'+(x-3)+',54" stroke="currentColor" stroke-width="1.8" fill="none"/>';
+   else if(k==='s')s='<circle cx="'+(x-1)+'" cy="38" r="2.2" fill="currentColor"/><circle cx="'+(x-3)+'" cy="44" r="2.2" fill="currentColor"/><path d="M'+(x+3)+',34 L'+(x-4)+',56" stroke="currentColor" stroke-width="1.8" fill="none"/>';
+   else if(k==='h')s='<rect x="'+(x-7)+'" y="'+(L-5)+'" width="14" height="5" fill="currentColor"/>';
+   else s='<rect x="'+(x-7)+'" y="'+L+'" width="14" height="5" fill="currentColor"/>';
+   if(n.dot)s+='<circle cx="'+(x+10)+'" cy="'+(L-6)+'" r="1.8" fill="currentColor"/>';
+  }else{
+   var open=(n.k==='w'||n.k==='h');
+   s='<ellipse cx="'+x+'" cy="'+L+'" rx="6.2" ry="4.4" transform="rotate(-20 '+x+' '+L+')" '+(open?'fill="none" stroke="currentColor" stroke-width="1.7"':'fill="currentColor"')+'/>';
+   if(n.k!=='w')s+='<line x1="'+(x+5.4)+'" y1="'+(L-2)+'" x2="'+(x+5.4)+'" y2="14" stroke="currentColor" stroke-width="1.5"/>';
+   if(n.dot)s+='<circle cx="'+(x+12)+'" cy="'+(L-6)+'" r="1.8" fill="currentColor"/>';
+  }
+  n.svg=s;});
+ /* beams y flags */
+ var beam='',grp=[];function flush(){if(grp.length>1){var a=grp[0],z=grp[grp.length-1];beam+='<line x1="'+(a.x+5.4)+'" y1="15" x2="'+(z.x+5.4)+'" y2="15" stroke="currentColor" stroke-width="4"/>';
+   for(var j=0;j<grp.length;j++){var n=grp[j];if(n.k!=='s')continue;var nx=grp[j+1],pv=grp[j-1];
+    if(nx&&nx.k==='s')beam+='<line x1="'+(n.x+5.4)+'" y1="22" x2="'+(nx.x+5.4)+'" y2="22" stroke="currentColor" stroke-width="3.5"/>';
+    else if(!(pv&&pv.k==='s')){var dir=nx?1:-1;beam+='<line x1="'+(n.x+5.4)+'" y1="22" x2="'+(n.x+5.4+dir*9)+'" y2="22" stroke="currentColor" stroke-width="3.5"/>';}}}
+  else if(grp.length===1){var n1=grp[0],fx=n1.x+5.4;beam+='<path d="M'+fx+',14 c1,9 11,10 9,22" fill="none" stroke="currentColor" stroke-width="2"/>'+(n1.k==='s'?'<path d="M'+fx+',21 c1,9 11,10 9,22" fill="none" stroke="currentColor" stroke-width="2"/>':'');}
+  grp=[];}
+ it.forEach(function(n){if(!n.r&&n.d<=.5){if(grp.length&&Math.floor(grp[0].pos/bg+1e-6)!==Math.floor(n.pos/bg+1e-6))flush();grp.push(n);}else flush();});flush();
+ var tsv=ts?'<text x="26" y="41" text-anchor="middle" font-family="Cormorant Garamond,Georgia,serif" font-weight="700" font-size="26" fill="currentColor">'+ts[0]+'</text><text x="26" y="67" text-anchor="middle" font-family="Cormorant Garamond,Georgia,serif" font-weight="700" font-size="26" fill="currentColor">'+ts[1]+'</text>':'';
+ var body=it.map(function(n,k){return '<g class="nt rn" data-i="'+k+'">'+n.svg+'</g>';}).join('');
+ return '<svg viewBox="0 0 '+W+' 80" style="max-width:'+Math.max(W,260)*1.5+'px" role="img" aria-label="Figura rítmica" data-s="'+(str||'')+'" data-ts="'+(ts?ts.join('/'):'')+'" class="nt" style="color:var(--staff)"><line x1="6" y1="'+L+'" x2="'+(W-4)+'" y2="'+L+'" stroke="currentColor" stroke-width="1.3"/>'+tsv+bars+body+beam+'</svg>';}
+window.AH_RH=function(str,scope,ts){var it=parse(str),c=A.ac();if(!c)return;var beat=.5,t0=c.currentTime+.06,pos=0,bl=ts?ts[0]*4/ts[1]:0,bg=ts&&ts[1]===8&&ts[0]%3===0?1.5:1;
+ var svg=scope&&scope.querySelector?[].filter.call(scope.querySelectorAll('svg[data-s]'),function(s){return s.getAttribute('data-s')===str;})[0]:null;
+ it.forEach(function(n,k){if(!n.r){var m=74;if(bl&&Math.abs(pos/bl-Math.round(pos/bl))<1e-6)m=84;else if(bg>1&&Math.abs(pos/bg-Math.round(pos/bg))<1e-6)m=79;else if(!bl)m=76;
+  A.tone(m,t0+pos*beat,.12,.26);}
+  if(svg)setTimeout(function(){var g=svg.querySelector('.rn[data-i="'+k+'"]');if(g){g.classList.add('hl');setTimeout(function(){g.classList.remove('hl');},Math.max(160,n.d*beat*900));}},pos*beat*1000);
+  pos+=n.d;});};
+function rpb(label,str,ts){return '<button class="btn ghost sm" data-rh="'+str+'" data-ts="'+(ts?ts.join('/'):'')+'">▶ '+label+'</button>';}
+function rbox(str,ts,end){return sbox(rh(str,{ts:ts,end:end}));}
+function rsum(items){return items.reduce(function(a,x){return a+parse(x)[0].d;},0);}
+var UN={2:'blancas',4:'negras',8:'corcheas'};
+function rhBuild(b,api,rounds){var i=0,items=[],missed=false,solved=false,w=el('<div></div>');b.appendChild(w);
+ var PAL=[['w','Redonda · 4'],['h','Blanca · 2'],['h.','Blanca con puntillo · 3'],['q','Negra · 1'],['q.','Negra con puntillo · 1½'],['e','Corchea · ½'],['s','Semicorchea · ¼'],['qr','Silencio de negra'],['hr','Silencio de blanca'],['er','Silencio de corchea']];
+ function draw(){var r=rounds[i],unit=4/r.ts[1],len=r.ts[0]*4/r.ts[1]*(r.bars||1),tot=rsum(items);
+  w.innerHTML='<p class="qt" style="font-weight:600;color:#fff">'+r.txt+'</p><div class="svgbox">'+rh(items.join(' '),{ts:r.ts})+'</div><p class="lbl">Llevas '+(Math.round(tot/unit*100)/100)+' de '+(len/unit)+' '+UN[r.ts[1]]+'.</p><div class="opts">'+PAL.map(function(p){return '<button class="opt" data-k="'+p[0]+'">'+p[1]+'</button>';}).join('')+'</div><div class="row"><button class="btn ghost sm" data-k="ba">Borrar la última</button><button class="btn" id="ck">Comprobar</button></div><div class="fb" hidden></div>';
+  var fb=w.querySelector('.fb');
+  [].forEach.call(w.querySelectorAll('[data-k]'),function(bt){bt.onclick=function(){if(solved)return;var k=bt.getAttribute('data-k');if(k==='ba')items.pop();else items.push(k);draw();};});
+  w.querySelector('#ck').onclick=function(){if(solved)return;fb.hidden=false;var msg='';
+   if(Math.abs(tot-len)>1e-6)msg=tot<len?'Todavía faltan '+(Math.round((len-tot)/unit*100)/100)+' '+UN[r.ts[1]]+'.':'Te pasaste por '+(Math.round((tot-len)/unit*100)/100)+' '+UN[r.ts[1]]+'.';
+   else{var bl=len/(r.bars||1),p=0;items.forEach(function(x){var d=parse(x)[0].d;var m=p%bl;if(m>1e-6&&m+d>bl+1e-6)msg='Una figura cruza la barra de compás. Usa una ligadura o cambia las figuras.';p+=d;});
+    if(!msg&&r.rule)msg=r.rule(items);}
+   if(!msg){solved=true;fb.className='fb ok';fb.innerHTML='Correcto. El compás suma exactamente '+len/unit+' '+UN[r.ts[1]]+'. '+(r.why||'');api.score(!missed);
+    if(i<rounds.length-1){var nb=el('<div class="row"><button class="btn">Siguiente</button></div>');w.appendChild(nb);nb.querySelector('button').onclick=function(){i++;items=[];missed=false;solved=false;draw();};}else api.done();}
+   else{missed=true;fb.className='fb bad';fb.textContent=msg;}};}
+ draw();}
+function RHB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);rhBuild(b,api,rounds);});}
+function hasN(items,t){return items.filter(function(x){return x===t;}).length;}
+/* ===== E1 ===== */
+RQ(0,'Ritmo, pulso y compás','<div class="def"><b>Pulso:</b> latido regular de la música.<br><b>Ritmo:</b> la organización de las duraciones sobre el pulso.<br><b>Compás:</b> agrupación de pulsos en unidades iguales, separadas por barras. El acento principal cae en el primer pulso.</div><p>Escucha un compás de 4/4: cuatro negras, con acento en la primera.</p>'+rbox('q q q q',[4,4],true)+'<div class="row">'+rpb('Escuchar','q q q q',[4,4])+'</div>',
+ [{q:'El acento principal de un compás cae en…',opts:['El primer pulso','El último pulso','Cualquier pulso'],ans:0,why:'El primer tiempo es el más fuerte.'},{q:'¿Qué separa un compás de otro?',opts:['La barra de compás','La clave','La armadura'],ans:0,why:'Las barras dividen la música en compases.'}]);
+RQ(0,'Figuras y silencios','<p>Cada figura dura la mitad que la anterior. Tomando la negra como unidad:</p>'+table([['Redonda','4'],['Blanca','2'],['Negra','1'],['Corchea','½'],['Semicorchea','¼']],['Figura','Tiempos'])+rbox('w h q e s',null)+'<p class="lbl">Cada figura tiene su silencio equivalente:</p>'+rbox('wr hr qr er sr',null)+'<div class="row">'+rpb('Escuchar figuras','h q e e s s s s',null)+'</div>',
+ [{q:'¿Cuántas corcheas caben en una negra?',opts:['2','4','8'],ans:0,why:'Una corchea dura ½ negra.'},{q:'¿Cuántas semicorcheas caben en una blanca?',opts:['4','8','16'],ans:1,why:'Una negra tiene 4 semicorcheas, y la blanca tiene dos negras.'},{q:'¿Cuántos tiempos dura una redonda?',opts:['2','3','4'],ans:2,why:'Dura 4 negras.'}]);
+RQ(0,'Puntillo y ligadura','<div class="def"><b>Puntillo:</b> añade a la figura la mitad de su valor. <b>Ligadura:</b> une dos notas del mismo sonido y suma sus duraciones.</div>'+rbox('h. q q. e',null)+table([['Blanca con puntillo','2 + 1 = 3'],['Negra con puntillo','1 + ½ = 1½'],['Corchea con puntillo','½ + ¼ = ¾']],['Figura','Duración'])+'<div class="row">'+rpb('Escuchar','h. q q. e',null)+'</div>',
+ [{q:'¿Cuánto dura una blanca con puntillo?',opts:['2','3','4'],ans:1,why:'2 + 1.'},{q:'¿Cuánto dura una negra con puntillo?',opts:['1½','2','1¼'],ans:0,why:'1 + ½.'}]);
+/* ===== E2 ===== */
+RQ(1,'Compases simples','<p>En un <b>compás simple</b> cada pulso se divide en dos partes iguales. Son binarios (2 pulsos), ternarios (3) o cuaternarios (4).</p>'+rbox('q q',[2,4],true)+rbox('q q q',[3,4],true)+rbox('q q q q',[4,4],true)+'<div class="row">'+rpb('2/4','q q',[2,4])+rpb('3/4','q q q',[3,4])+rpb('4/4','q q q q',[4,4])+'</div>',
+ [{q:'En 3/4 hay…',opts:['2 pulsos','3 pulsos','4 pulsos'],ans:1,why:'El numerador indica los pulsos del compás.'},{q:'En un compás simple, cada pulso se divide en…',opts:['2 partes','3 partes'],ans:0,why:'Por eso la negra se divide en dos corcheas.'}]);
+RQ(1,'Compases compuestos','<p>En un <b>compás compuesto</b> cada pulso se divide en tres partes. El pulso es una figura con puntillo. En 6/8 hay dos pulsos de tres corcheas.</p>'+rbox('e e e e e e',[6,8],true)+rbox('q. q.',[6,8],true)+'<div class="row">'+rpb('Escuchar 6/8','e e e e e e',[6,8])+rpb('Dos pulsos','q. q.',[6,8])+'</div>',
+ [{q:'¿Cuántos pulsos tiene 6/8?',opts:['2','3','6'],ans:0,why:'Se agrupan de tres en tres: 2 pulsos.'},{q:'El pulso de un compás compuesto es una figura…',opts:['Con puntillo','Sin puntillo'],ans:0,why:'Como la negra con puntillo en 6/8.'}]);
+MT(1,'Clasifica los compases','<p>Clasifica cada compás.</p>','¿Qué tipo de compás es?',['Simple binario','Simple ternario','Simple cuaternario','Compuesto binario','Compuesto ternario','Compuesto cuaternario'],[['2/4',0],['3/4',1],['4/4',2],['6/8',3],['9/8',4],['12/8',5]]);
+RQ(1,'Cómo leer la cifra del compás','<p>El <b>numerador</b> dice cuántas unidades hay en el compás. El <b>denominador</b> dice qué figura es la unidad: 2 = blanca, 4 = negra, 8 = corchea.</p>'+table([['3/4','3 negras'],['2/2','2 blancas'],['6/8','6 corcheas'],['3/8','3 corcheas']],['Cifra','Contenido del compás']),
+ [{q:'3/8 contiene…',opts:['3 negras','3 corcheas','8 tercios'],ans:1,why:'Denominador 8: la unidad es la corchea.'},{q:'2/2 contiene…',opts:['2 blancas','2 negras','2 redondas'],ans:0,why:'Denominador 2: la unidad es la blanca.'}]);
+/* ===== E3 ===== */
+RHB(2,'Completa el compás','<p>Construye cada compás con las figuras de la paleta. Debe sumar exactamente lo que pide la cifra.</p>',[
+ {ts:[4,4],txt:'Completa un compás de 4/4 con las figuras que quieras.',why:''},
+ {ts:[3,4],txt:'Completa un compás de 3/4 usando una blanca.',rule:function(it){return hasN(it,'h')?'':'Debe incluir una blanca.';}},
+ {ts:[6,8],txt:'Completa un compás de 6/8 usando una negra con puntillo.',rule:function(it){return hasN(it,'q.')?'':'Debe incluir una negra con puntillo.';}},
+ {ts:[2,4],txt:'Completa un compás de 2/4 que incluya un silencio.',rule:function(it){return it.some(function(x){return /r$/.test(x);})?'':'Debe incluir un silencio.';}},
+ {ts:[4,4],txt:'Completa un compás de 4/4 con dos corcheas y una blanca.',rule:function(it){return hasN(it,'e')===2&&hasN(it,'h')===1?'':'Usa exactamente dos corcheas y una blanca.';}}]);
+RQ(2,'Agrupar las corcheas','<p>Las corcheas se unen con una barra para mostrar el pulso. En compás simple se agrupan por pulso. En 6/8 se agrupan de tres en tres.</p>'+rbox('e e e e q q',[4,4])+rbox('e e e e e e',[6,8],true),
+ [{q:'En 6/8, las corcheas se agrupan…',opts:['De dos en dos','De tres en tres','De seis en seis'],ans:1,why:'Cada grupo de tres es un pulso.'},{q:'En 2/4, dos corcheas seguidas forman…',opts:['Un pulso','Dos pulsos'],ans:0,why:'Cada negra se divide en dos corcheas.'}]);
+RQ(2,'Calcula los compases','<p>Para comprobar un compás, suma las duraciones.</p>',[
+ {q:'¿Cuánto suman las figuras de este compás?',pre:rh('q. e h',{ts:[4,4]}),opts:['3½','4','4½'],ans:1,why:'1½ + ½ + 2.'},
+ {q:'¿Cuál es la cifra de este compás?',pre:rh('q q q',{ts:null,u:44}),opts:['2/4','3/4','4/4'],ans:1,why:'Hay tres negras.'},
+ {q:'¿Qué figura falta para completar un 3/4 que ya tiene blanca?',pre:rh('h',{ts:[3,4]}),opts:['Negra','Blanca','Corchea'],ans:0,why:'Faltan 3 − 2 = 1 negra.'}]);
+/* ===== E4 ===== */
+RQ(3,'Acentuación y pulso fuerte','<p>Los tiempos tienen distinto peso. El primero es <b>fuerte</b>; los demás son <b>débiles</b>, y en 4/4 el tercero es <b>semifuerte</b>.</p>'+table([['2/4','fuerte, débil'],['3/4','fuerte, débil, débil'],['4/4','fuerte, débil, semifuerte, débil'],['6/8','fuerte (1) y semifuerte (4)']],['Compás','Acentos'])+'<div class="row">'+rpb('3/4','q q q',[3,4])+rpb('4/4','q q q q',[4,4])+rpb('6/8','e e e e e e',[6,8])+'</div>',
+ [{q:'¿Cuál es el pulso más fuerte de un compás?',opts:['El primero','El segundo','El último'],ans:0,why:'El primero marca el inicio del compás.'},{q:'En 6/8 la corchea 4 es…',opts:['Un acento semifuerte','Un tiempo débil','El más fuerte'],ans:0,why:'Es el comienzo del segundo pulso.'}]);
+RQ(3,'Anacrusa','<div class="def"><b>Anacrusa:</b> inicio de la melodía antes del primer pulso fuerte. El primer compás queda incompleto y el último completa lo que falta.</div>'+rbox('q',[4,4])+'<p class="lbl">Ejemplo: «Cumpleaños feliz» empieza en anacrusa.</p>',
+ [{q:'Una melodía con anacrusa empieza…',opts:['Antes del primer tiempo fuerte','Siempre en silencio','En el último compás'],ans:0,why:'La primera nota cae en tiempo débil.'},{q:'El compás final de una pieza con anacrusa suele estar…',opts:['Incompleto','Completo, con doble duración'],ans:0,why:'Completa lo que faltó al inicio.'}]);
+RQ(3,'Síncopa y contratiempo','<div class="def"><b>Síncopa:</b> sonido que empieza en tiempo débil y se prolonga sobre el fuerte. <b>Contratiempo:</b> sonido en la parte débil del pulso, con silencio en la fuerte.</div><p>Síncopa en 2/4: corchea, negra, corchea.</p>'+rbox('e q e',[2,4],true)+'<p>Contratiempo: silencio de corchea y corchea.</p>'+rbox('er e er e',[2,4],true)+'<div class="row">'+rpb('Síncopa','e q e',[2,4])+rpb('Contratiempo','er e er e',[2,4])+'</div>',
+ [{q:'En «corchea, negra, corchea» la negra empieza…',opts:['En la parte débil del pulso','En el primer tiempo'],ans:0,why:'Por eso se desplaza el acento.'},{q:'El contratiempo lleva un silencio en…',opts:['La parte fuerte','La parte débil'],ans:0,why:'La nota suena después del silencio.'}]);
+RQ(3,'Excepciones: tresillo y hemiola','<p>Un <b>tresillo</b> mete tres notas en el tiempo de dos. Una <b>hemiola</b> hace sonar 6/8 como 3/4 (dos grupos de tres corcheas frente a tres grupos de dos).</p>'+rbox('e e e e e e',[6,8])+'<div class="row">'+rpb('6/8','e e e e e e',[6,8])+rpb('3/4','q q q',[3,4])+'</div>',
+ [{q:'Un tresillo reparte tres notas en el tiempo de…',opts:['Dos','Cuatro'],ans:0,why:'Es una división irregular de dos.'},{q:'La hemiola alterna la métrica…',opts:['6/8 y 3/4','2/4 y 4/4'],ans:0,why:'Hace oír dos pulsos o tres sobre el mismo compás.'}]);
+/* ===== E5 ===== */
+RQ(4,'Ritmos en piezas conocidas','<p>Patrones típicos de cada compás. Escúchalos y sigue la figura.</p>'+table([['2/4 · Marcha','q q e e q q q'],['3/4 · Vals','q h q q q h q'],['4/4 · Himno','q q q q q q q q'],['6/8 · Barcarola','q. q. e e e q.']],['Estilo','Ritmo'])+rbox('q q e e q q q',[2,4])+rbox('q h q q q h q',[3,4])+rbox('q. q. e e e q.',[6,8])+'<div class="row">'+rpb('Marcha','q q e e q q q',[2,4])+rpb('Vals','q h q q q h q',[3,4])+rpb('Barcarola','q. q. e e e q.',[6,8])+'</div>',null);
+RQ(4,'Oído: binario o ternario','<p>Escucha y decide si cada ritmo tiene pulso de dos o de tres.</p>',[
+ {q:'¿Cómo se agrupan los pulsos?',audio:[{l:'Escuchar',mode:'rh',s:'q q q q q q',ts:[3,4]}],opts:['De dos en dos','De tres en tres'],ans:1,why:'El acento cae cada tres negras.'},
+ {q:'¿Cómo se agrupan los pulsos?',audio:[{l:'Escuchar',mode:'rh',s:'q q q q',ts:[2,4]}],opts:['De dos en dos','De tres en tres'],ans:0,why:'El acento cae cada dos negras.'},
+ {q:'¿Cómo se agrupan los pulsos?',audio:[{l:'Escuchar',mode:'rh',s:'q q q q q q q q',ts:[4,4]}],opts:['De dos en dos','De cuatro en cuatro'],ans:1,why:'Acento fuerte cada cuatro negras.'}]);
+/* ===== E6 ===== */
+RQ(5,'Analiza el compás','<p>Fíjate en cuántas unidades hay entre barras y en cómo se agrupan.</p>',[
+ {q:'¿Qué cifra de compás corresponde?',pre:rh('q q q',{}),opts:['2/4','3/4','4/4'],ans:1,why:'Tres negras.'},
+ {q:'¿Qué cifra de compás corresponde?',pre:rh('q. q.',{}),opts:['2/4','3/4','6/8'],ans:2,why:'Dos pulsos con puntillo: 6/8.'},
+ {q:'¿Qué cifra corresponde?',pre:rh('h q',{}),opts:['2/4','3/4','4/4'],ans:1,why:'2 + 1 = 3 negras.'}]);
+RQ(5,'Análisis: Himno de la alegría','<p>Ritmo del tema de Beethoven (4 compases en 4/4):</p>'+rbox('q q q q q q q q q q q q q. e h',[4,4],true)+'<div class="row">'+rpb('Escuchar','q q q q q q q q q q q q q. e h',[4,4])+'</div>',
+ [{q:'¿Cuántos compases hay?',opts:['3','4','5'],ans:1,why:'Cada compás tiene 4 negras.'},{q:'¿Qué figura lleva puntillo?',opts:['Una negra','Una blanca','Una corchea'],ans:0,why:'La negra del compás 4.'},{q:'La última nota es…',opts:['Una blanca','Una negra','Una redonda'],ans:0,why:'Dura 2 tiempos.'}]);
+RQ(5,'Análisis: marcha y vals','<p>Compara el ritmo de una marcha (2/4) con el de un vals (3/4).</p>'+rbox('q q e e q q q',[2,4],true)+rbox('q h q q q h q',[3,4],true),
+ [{q:'¿Cuántas negras dura cada compás de la marcha?',opts:['2','3','4'],ans:0,why:'2/4 = 2 negras.'},{q:'¿Cuántas negras dura cada compás del vals?',opts:['2','3','4'],ans:1,why:'3/4 = 3 negras.'},{q:'El vals acentúa…',opts:['El primer pulso de cada tres','El tercer pulso'],ans:0,why:'Fuerte, débil, débil.'}]);
+/* ===== E7 ===== */
+RHB(6,'Escribe el ritmo pedido','<p>Escribe compases que cumplan lo que se pide.</p>',[
+ {ts:[2,4],txt:'Escribe un compás de 2/4 con síncopa (corchea, negra, corchea).',rule:function(it){return it.join(' ').indexOf('e q e')>=0?'':'Incluye corchea, negra y corchea seguidas.';}},
+ {ts:[6,8],txt:'Escribe un compás de 6/8 con tres corcheas y una negra con puntillo.',rule:function(it){return hasN(it,'e')===3&&hasN(it,'q.')===1?'':'Usa tres corcheas y una negra con puntillo.';}},
+ {ts:[3,4],txt:'Escribe un compás de 3/4 con una negra, un silencio de negra y una negra.',rule:function(it){return it.join(' ')==='q qr q'?'':'Orden: negra, silencio de negra, negra.';}}]);
+RHB(6,'Compón dos compases','<p>Compón dos compases en 4/4. Debe empezar con negra, incluir dos corcheas seguidas y terminar con blanca o redonda.</p>',[
+ {ts:[4,4],bars:2,txt:'Dos compases de 4/4.',why:'Un ritmo con arranque marcado y final reposado.',rule:function(it){var j=it.join(' ');if(it[0]!=='q')return 'Debe empezar con una negra.';if(j.indexOf('e e')<0)return 'Incluye dos corcheas seguidas.';var l=it[it.length-1];return l==='h'||l==='w'?'':'Debe terminar con blanca o redonda.';}}]);
+/* ===== E8 ===== */
+RQ(7,'Contar y subdividir','<p>Para leer ritmos, cuenta en voz alta y subdivide.</p>'+table([['Simple','1 y 2 y 3 y 4 y'],['Compuesto (6/8)','1-la-li 2-la-li'],['Semicorcheas','1 e y a 2 e y a']],['Compás','Cuenta'])+'<div class="row">'+rpb('4/4 con corcheas','e e e e e e e e',[4,4])+rpb('6/8','e e e e e e',[6,8])+'</div>',
+ [{q:'En 6/8 se cuenta…',opts:['1-la-li 2-la-li','1 y 2 y 3 y'],ans:0,why:'Cada pulso tiene tres partes.'},{q:'Para subdividir semicorcheas se dice…',opts:['1 e y a','1 y'],ans:0,why:'Cuatro partes por pulso.'}]);
+RQ(7,'Evaluación final del tema','',[
+ {q:'¿Cuántas corcheas hay en un compás de 6/8?',opts:['3','6','8'],ans:1,why:'6/8 tiene seis corcheas.'},
+ {q:'¿Cuánto dura una negra con puntillo?',opts:['1½','2','¾'],ans:0,why:'1 + ½.'},
+ {q:'¿Qué compás es simple ternario?',opts:['2/4','3/4','6/8'],ans:1,why:'Tres pulsos que se dividen en dos.'},
+ {q:'¿Qué compás es compuesto binario?',opts:['6/8','9/8','3/4'],ans:0,why:'Dos pulsos que se dividen en tres.'},
+ {q:'La síncopa acentúa…',opts:['Un tiempo débil','Siempre el primer tiempo'],ans:0,why:'Desplaza el acento.'},
+ {q:'Una anacrusa es…',opts:['Un inicio antes del primer tiempo fuerte','Un final sin acento'],ans:0,why:'Antes del primer compás completo.'}]);
+
+window.AH_LESSON.TOPICS[6]=STEPS;
+})();
+(function(){'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n),l:n.l,o:n.o};}
+function mids(list){return list.split(' ').map(function(x){return N(x).m;});}
+function pm(list){return mids(list).join(',');}
+function pc(cols){return cols.split(' ').map(function(c){return pm(c.replace(/,/g,' '));}).join(';');}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:list.split(' ').map(function(x,i){var n=N(x);return {s:n.s,a:n.a,open:o.open!==false,stem:!!o.stem,lab:o.lab?o.lab[i]:undefined};})});}
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function pb(label,kind,payload,dt){return '<button class="btn ghost sm" data-p="'+kind+'|'+(dt||'')+'|'+payload+'">▶ '+label+'</button>';}
+function wire(b){[].forEach.call(b.querySelectorAll('[data-rh]'),function(x){x.onclick=function(){if(window.AH_RH)window.AH_RH(x.getAttribute('data-rh'),b,x.dataset.ts?x.dataset.ts.split('/').map(Number):null);};});[].forEach.call(b.querySelectorAll('[data-p]'),function(x){x.onclick=function(){var p=x.getAttribute('data-p').split('|'),k=p[0],dt=p[1]?+p[1]:0,pl=p[2];
+ if(k==='chord')A.chord(pl.split(',').map(Number),1.8);else if(k==='seq')A.seq(pl.split(',').map(Number),dt||.4);else if(k==='chords')A.chords(pl.split(';').map(function(c){return c.split(',').map(Number);}),dt>20?dt/1000:(dt||.9));};});}
+function RQ(st,ti,html,qs){var has=qs&&qs.length;S(st,ti,function(b,api){b.innerHTML=html+(has?'<div id="qq" style="margin-top:14px"></div>':'');wire(b);if(has)quiz(b.querySelector('#qq'),api,qs);},!has);}
+function KB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);kbBuild(b,api,rounds);});}
+function ENT(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);entry(b,api,rounds);});}
+function MT(st,ti,intro,head,cats,rows){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);match(w,api,{head:head,cats:cats,rows:rows.map(function(x){return {l:x[0],ans:x[1]};})});});}
+function NE(st,ti,intro,rounds){ENT(st,ti,intro,rounds.map(function(r){var g=N(r.g),w=N(r.w),sig=r.sig||0;return {sig:sig,cols:2,nohit:[0],txt:r.txt,why:r.why,given:[{c:0,s:g.s,a:g.a}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===w.s&&n.a===w.a;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Revisa el número (contando letras) y la calidad (contando semitonos).'};}};}));}
+function EXP(sig,list,txt,why,extra){var ns=list.split(' ').map(N);var o={sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns.map(function(n){return {s:n.s,a:n.a};}))};if(extra)for(var k in extra)o[k]=extra[k];return o;}
+/* acordes */
+var QI={M:[0,4,7],m:[0,3,7],d:[0,3,6],a:[0,4,8],M7:[0,4,7,11],m7:[0,3,7,10],D7:[0,4,7,10],h7:[0,3,6,10],d7:[0,3,6,9],mM7:[0,3,7,11]};
+var QS={M:'',m:'m',d:'°',a:'+',M7:'maj7',m7:'m7',D7:'7',h7:'m7♭5',d7:'°7',mM7:'m(maj7)'};
+function K(l,a,type,o,inv){return {l:l,a:a,t:type,o:o,i:inv||0};}
+function spell(k){var iv=QI[k.t],i0=A.LET.indexOf(k.l),base=A.PC[k.l]+k.a+12*(k.o+1),out=[];iv.forEach(function(x,j){var q=i0+2*j,li=q%7,oo=k.o+Math.floor(q/7);out.push({l:A.LET[li],a:base+x-(A.PC[A.LET[li]]+12*(oo+1)),o:oo});});
+ for(var r=0;r<k.i;r++){var f=out.shift();f.o+=1;out.push(f);}return out;}
+function chm(k){return spell(k).map(A.midOf);}
+function chs(specs,o){o=o||{};var ns=[];specs.forEach(function(k,ci){spell(k).forEach(function(n,j){ns.push({c:ci,s:A.stpOf(n),a:n.a,open:o.open!==false,lab:(j===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||56,notes:ns,cols:specs.length,bar:true,w:o.w});}
+function cif(k){return k.l+A.accS(k.a)+QS[k.t]+(k.i?'/'+(function(){var n=spell(k)[0];return n.l+A.accS(n.a);})():'');}
+function chp(specs,dt){return pb('Escuchar','chords',specs.map(function(k){return chm(k).join(',');}).join(';'),dt||1000);}
+function chb(k){return pb(cif(k),'chord',chm(k).join(','));}
+function ARP(sig,k,txt,why){var ns=spell(k).map(function(n){return {s:A.stpOf(n),a:n.a};});return {sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns)};}
+
+var CM=[K('C',0,'M',4),K('D',0,'m',4),K('E',0,'m',4),K('F',0,'M',4),K('G',0,'M',4),K('A',0,'m',4),K('B',0,'d',4)];
+function TQ(k,opts,ans,why,q){return {pre:chs([k],{gap:60,w:200}),q:q||'¿Qué tipo de tríada es?',opts:opts,ans:ans,why:why};}
+/* E1 */
+RQ(0,'Qué es un acorde','<div class="def"><b>Acorde:</b> conjunto de tres o más sonidos que suenan a la vez. La <b>tríada</b> es el acorde básico: tres notas superpuestas por terceras.</div>'+sbox(chs([K('C',0,'M',4)],{gap:60,w:200,lab:['Do mayor']}))+'<div class="row">'+chp([K('C',0,'M',4)])+pb('En arpegio','seq','60,64,67',.4)+'</div>',
+ [{q:'¿Cuántas notas tiene una tríada?',opts:['2','3','4'],ans:1,why:'Tríada = tres sonidos.'},{q:'¿Cómo se superponen las notas de una tríada?',opts:['Por terceras','Por segundas','Por quintas'],ans:0,why:'Do–Mi–Sol: terceras superpuestas.'}]);
+RQ(0,'Los elementos de la tríada','<p>Cada nota de la tríada tiene un nombre:</p>'+table([['Fundamental','La nota que da nombre al acorde','Do'],['Tercera','A una 3ª sobre la fundamental','Mi'],['Quinta','A una 5ª sobre la fundamental','Sol']],['Elemento','Definición','En Do mayor'])+'<p class="lbl">La calidad (mayor o menor) la decide la tercera. La quinta suele ser justa.</p>',
+ [{q:'En la tríada de Fa mayor (Fa–La–Do), la quinta es…',opts:['Fa','La','Do'],ans:2,why:'Do está a una 5ª de Fa.'},{q:'La nota que da nombre al acorde se llama…',opts:['Fundamental','Tercera','Bajo'],ans:0,why:'También se llama raíz.'}]);
+KB(0,'Construye la tríada','<p>Forma cada tríada en el teclado.</p>',[{pcs:[0,4,7],n:3,txt:'Do mayor',why:'Do–Mi–Sol.'},{pcs:[2,5,9],n:3,txt:'Re menor',why:'Re–Fa–La.'},{pcs:[11,2,5],n:3,txt:'Si disminuida',why:'Si–Re–Fa: dos terceras menores.'},{pcs:[0,4,8],n:3,txt:'Do aumentada',why:'Do–Mi–Sol♯: dos terceras mayores.'}]);
+/* E2 */
+RQ(1,'Las cuatro tríadas','<p>Según las terceras que la forman, hay cuatro tipos:</p>'+table([['Mayor','3ª mayor + 3ª menor','0–4–7'],['Menor','3ª menor + 3ª mayor','0–3–7'],['Disminuida','3ª menor + 3ª menor','0–3–6'],['Aumentada','3ª mayor + 3ª mayor','0–4–8']],['Tríada','Terceras','Semitonos'])+sbox(chs([K('C',0,'M',4),K('C',0,'m',4),K('C',0,'d',4),K('C',0,'a',4)],{gap:56,w:300,lab:['Do','Do m','Do °','Do +']}))+'<div class="row">'+chp([K('C',0,'M',4),K('C',0,'m',4),K('C',0,'d',4),K('C',0,'a',4)],1200)+'</div>',
+ [TQ(K('E',0,'m',4),['Mayor','Menor','Disminuida'],1,'Mi–Sol–Si: 3ª menor y 3ª mayor.'),TQ(K('B',0,'d',4),['Menor','Disminuida','Aumentada'],1,'Si–Re–Fa: dos terceras menores.'),TQ(K('F',0,'M',4),['Mayor','Menor','Aumentada'],0,'Fa–La–Do: 3ª mayor y 3ª menor.')]);
+MT(1,'Clasifica las tríadas','<p>Clasifica cada tríada.</p>','¿Qué tríada es?',['Mayor','Menor','Disminuida','Aumentada'],[['Do–Mi–Sol',0],['Re–Fa–La',1],['Si–Re–Fa',2],['Do–Mi–Sol♯',3],['Fa–La–Do',0],['Mi–Sol–Si',1]]);
+RQ(1,'Tríadas diatónicas de Do mayor','<p>Si construyes una tríada sobre cada grado de la escala, solo usas notas de la tonalidad:</p>'+sbox(chs(CM,{gap:50,w:460,lab:['I','ii','iii','IV','V','vi','vii°']}))+table([['I','Do','mayor'],['ii','Re','menor'],['iii','Mi','menor'],['IV','Fa','mayor'],['V','Sol','mayor'],['vi','La','menor'],['vii°','Si','disminuida']],['Grado','Fundamental','Tríada'])+'<div class="row">'+chp(CM,800)+'</div>',
+ [{q:'En una tonalidad mayor, las tríadas mayores están en los grados…',opts:['I, IV y V','II, III y VI','Solo el I'],ans:0,why:'I, IV y V son mayores.'},{q:'La tríada disminuida está en el grado…',opts:['VII','II','IV'],ans:0,why:'Si–Re–Fa.'}]);
+RQ(1,'Cifrado de los acordes','<p>Hay dos formas habituales de nombrar un acorde: con <b>números romanos</b> (según el grado) y con <b>cifrado americano</b> (con letras).</p>'+table([['I','C'],['ii','Dm'],['iii','Em'],['IV','F'],['V','G'],['vi','Am'],['vii°','Bdim o B°']],['Romano','Americano (Do mayor)'])+'<p class="lbl">Las mayúsculas indican acorde mayor; las minúsculas, menor o disminuido.</p>',
+ [{q:'En Do mayor, el acorde V se cifra…',opts:['G','Gm','F'],ans:0,why:'Sol mayor.'},{q:'El acorde «Am» corresponde al grado…',opts:['vi','IV','ii'],ans:0,why:'La menor es el sexto grado.'}]);
+/* E3 */
+ENT(2,'Escribe tríadas en arpegio','<p>Escribe cada tríada en arpegio ascendente: fundamental, tercera y quinta.</p>',[ARP(0,K('F',0,'M',4),'Fa mayor','Fa–La–Do.'),ARP(0,K('D',0,'m',4),'Re menor','Re–Fa–La.'),ARP(0,K('B',0,'d',4),'Si disminuida','Si–Re–Fa.'),ARP(0,K('G',0,'m',4),'Sol menor','Sol–Si♭–Re. El Si bemol se añade con alteración.')]);
+KB(2,'Tríadas con alteraciones','<p>Forma estas tríadas en el teclado (incluyen teclas negras).</p>',[{pcs:[7,11,2],n:3,txt:'Sol mayor',why:'Sol–Si–Re.'},{pcs:[9,0,4],n:3,txt:'La menor',why:'La–Do–Mi.'},{pcs:[4,8,11],n:3,txt:'Mi mayor',why:'Mi–Sol♯–Si.'},{pcs:[11,2,6],n:3,txt:'Si menor',why:'Si–Re–Fa♯.'}]);
+RQ(2,'Inversiones de la tríada','<div class="def"><b>Inversión:</b> el acorde cambia la nota del bajo.<br><b>Estado fundamental:</b> la fundamental en el bajo (5/3).<br><b>1ª inversión:</b> la tercera en el bajo (6/3, se cifra 6).<br><b>2ª inversión:</b> la quinta en el bajo (6/4).</div>'+sbox(chs([K('C',0,'M',4),K('C',0,'M',4,1),K('C',0,'M',4,2)],{gap:60,w:280,lab:['C','C/E','C/G']}))+'<div class="row">'+chp([K('C',0,'M',4),K('C',0,'M',4,1),K('C',0,'M',4,2)],1200)+'</div>',
+ [{q:'¿Qué nota va en el bajo en primera inversión?',opts:['La fundamental','La tercera','La quinta'],ans:1,why:'6/3: la tercera abajo.'},{q:'C/G es un acorde de Do mayor en…',opts:['Estado fundamental','1ª inversión','2ª inversión'],ans:2,why:'La quinta (Sol) en el bajo.'},{q:'El cifrado 6/4 indica…',opts:['2ª inversión','1ª inversión','Estado fundamental'],ans:0,why:'Intervalos desde el bajo: 6ª y 4ª.'}]);
+RQ(2,'Cifrado de las inversiones','<p>El cifrado clásico cuenta los intervalos desde el bajo:</p>'+table([['Estado fundamental','5/3 (no se escribe)','C'],['1ª inversión','6/3 (se escribe 6)','C/E'],['2ª inversión','6/4','C/G']],['Posición','Cifrado clásico','Cifrado americano'])+'<p class="lbl">En el cifrado americano se escribe después de una barra la nota del bajo.</p>',
+ [{q:'Dm/F está en…',opts:['Estado fundamental','1ª inversión','2ª inversión'],ans:1,why:'Fa es la tercera de Re menor.'},{q:'Un acorde con el cifrado 6 está en…',opts:['1ª inversión','2ª inversión','Estado fundamental'],ans:0,why:'Equivale a 6/3.'}]);
+/* E4 */
+RQ(3,'Reglas de duplicación','<p>En el estilo a cuatro voces hay una nota duplicada. Reglas generales:</p>'+table([['Estado fundamental','Duplicar la fundamental'],['1ª inversión','Duplicar cualquiera, mejor no la sensible'],['2ª inversión','Duplicar el bajo (la quinta)']],['Posición','Duplicación']),
+ [{q:'En segunda inversión se duplica…',opts:['La nota del bajo','La tercera','La sensible'],ans:0,why:'El bajo es la quinta del acorde.'},{q:'En estado fundamental se duplica…',opts:['La fundamental','La tercera','La quinta'],ans:0,why:'Es la duplicación más estable.'}]);
+RQ(3,'Posición abierta y cerrada','<p>Las notas superiores pueden estar <b>cerradas</b> (a menos de una octava) o <b>abiertas</b> (con espacio de otra nota entre ellas).</p>'+sbox(cstf('C4,E4,G4 C4,G4,E5',{gap:70,w:240,lab:['cerrada','abierta']}))+'<div class="row">'+pb('Cerrada','chord','60,64,67')+pb('Abierta','chord','60,67,76')+'</div>',
+ [{q:'Una tríada con sus notas a menos de una octava es de posición…',opts:['Cerrada','Abierta'],ans:0,why:'Todas las notas caben en un intervalo menor que una octava.'}]);
+RQ(3,'Excepciones: el acorde de cuarta y sexta','<p>El 6/4 es el estado menos estable. Suele usarse en situaciones concretas:</p>'+table([['6/4 cadencial','Antes del V en una cadencia (I⁶⁄₄–V)'],['6/4 de paso','Entre dos acordes, con el bajo por grado'],['6/4 de bordadura','Entre dos acordes iguales']],['Tipo','Uso'])+'<p class="lbl">Se estudiará con detalle más adelante en el curso.</p>',
+ [{q:'El 6/4 se considera…',opts:['Menos estable que el estado fundamental','Más estable que el estado fundamental'],ans:0,why:'La quinta en el bajo crea una cuarta con la fundamental.'}]);
+/* E5 */
+RQ(4,'Ejemplos: Do mayor en tres posiciones','<p>Escucha cómo cambia el color del acorde cuando cambia el bajo.</p>'+sbox(chs([K('C',0,'M',4),K('C',0,'M',4,1),K('C',0,'M',4,2)],{gap:60,w:280,lab:['5/3','6/3','6/4']}))+'<div class="row">'+chp([K('C',0,'M',4),K('C',0,'M',4,1),K('C',0,'M',4,2)],1200)+'</div>',null);
+RQ(4,'Oído: tipo de tríada','<p>Escucha e identifica la tríada.</p>',[
+ {q:'¿Cuál es mayor?',audio:[{l:'A',mode:'chord',m:[60,64,67]},{l:'B',mode:'chord',m:[60,63,67]}],opts:['A','B'],ans:0,why:'La mayor suena brillante: 3ª mayor abajo.'},
+ {q:'¿Cuál es disminuida?',audio:[{l:'A',mode:'chord',m:[60,63,66]},{l:'B',mode:'chord',m:[60,63,67]}],opts:['A','B'],ans:0,why:'Tiene la quinta disminuida.'},
+ {q:'¿Cuál es aumentada?',audio:[{l:'A',mode:'chord',m:[60,64,68]},{l:'B',mode:'chord',m:[60,64,67]}],opts:['A','B'],ans:0,why:'La quinta aumentada suena inestable.'}]);
+RQ(4,'Oído: inversión','<p>Escucha tres posiciones de Do mayor.</p>',[
+ {q:'¿Cuál es la primera inversión?',audio:[{l:'A',mode:'chord',m:[60,64,67]},{l:'B',mode:'chord',m:[64,67,72]},{l:'C',mode:'chord',m:[67,72,76]}],opts:['A','B','C'],ans:1,why:'Mi es el bajo.'},
+ {q:'¿Cuál es la segunda inversión?',audio:[{l:'A',mode:'chord',m:[60,64,67]},{l:'B',mode:'chord',m:[64,67,72]},{l:'C',mode:'chord',m:[55,60,64]}],opts:['A','B','C'],ans:2,why:'Sol es el bajo.'}]);
+/* E6 */
+MT(5,'Análisis: ¿qué posición es?','<p>Identifica la posición de cada acorde por su cifrado.</p>','¿En qué posición está?',['Estado fundamental','1ª inversión','2ª inversión'],[['G',0],['C/E',1],['Dm/A',2],['Am/C',1],['F/A',1],['C/G',2],['Em',0]]);
+RQ(5,'Análisis: I – IV⁶ – V – I','<p>Una progresión con acordes en distintas posiciones:</p>'+sbox(chs([K('C',0,'M',4),K('F',0,'M',4,1),K('G',0,'M',4),K('C',0,'M',4)],{gap:60,w:340,lab:['I','IV6','V','I']}))+'<div class="row">'+chp([K('C',0,'M',4),K('F',0,'M',4,1),K('G',0,'M',4),K('C',0,'M',4)],1000)+'</div>',
+ [{q:'¿Qué nota está en el bajo del segundo acorde?',opts:['Fa','La','Do'],ans:1,why:'Es F/A: la tercera en el bajo.'},{q:'¿En qué posición está el segundo acorde?',opts:['Estado fundamental','1ª inversión','2ª inversión'],ans:1,why:'La tercera abajo.'},{q:'El tercer acorde es…',opts:['Sol mayor','Sol menor','Re menor'],ans:0,why:'Sol–Si–Re.'}]);
+RQ(5,'Análisis: una progresión famosa','<p>El Canon de Pachelbel usa en Do mayor la secuencia: C – G – Am – Em – F – C – F – G.</p>'+table([['C','G','Am','Em'],['I','V','vi','iii'],['F','C','F','G'],['IV','I','IV','V']],['','','','']),
+ [{q:'¿Cuántos acordes menores hay en esa secuencia?',opts:['2','3','4'],ans:0,why:'Am y Em.'},{q:'El acorde Em es el grado…',opts:['iii','vi','ii'],ans:0,why:'Mi es el tercer grado de Do mayor.'}]);
+/* E7 */
+ENT(6,'Escribe inversiones','<p>Escribe cada acorde en arpegio ascendente desde su bajo.</p>',[ARP(0,K('C',0,'M',4,1),'C/E (1ª inversión de Do mayor)','Mi–Sol–Do.'),ARP(0,K('F',0,'M',4,1),'F/A (1ª inversión de Fa mayor)','La–Do–Fa.'),ARP(0,K('A',0,'m',3,2),'Am/E (2ª inversión de La menor)','Mi–La–Do.'),ARP(0,K('D',0,'m',4,1),'Dm/F (1ª inversión de Re menor)','Fa–La–Re.')]);
+S(6,'Compón una primera inversión',function(b,api){b.innerHTML='<p>Escribe, en arpegio ascendente, una <b>primera inversión de una tríada menor</b> sobre la nota que prefieras. Debe cumplir: de la nota grave a la media hay una 3ª mayor, y de la media a la aguda una 4ª justa.</p>';
+ entry(b,api,[{sig:0,cols:3,txt:'Escribe tu acorde.',why:'Una primera inversión de tríada menor: 3ª mayor + 4ª justa.',check:function(ns){if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var m=ns.map(function(n){return A.midOf(A.stepNote(n.s,n.a));}),ok=(m[1]-m[0]===4&&m[2]-m[1]===5&&ns[1].s-ns[0].s===2&&ns[2].s-ns[1].s===3);return {ok:ok,cls:ns.map(function(){return ok?'ok':'bad';}),msg:'Cuenta los semitonos: 4 entre la 1ª y la 2ª nota, y 5 entre la 2ª y la 3ª. Y cuenta las letras: 3ª y 4ª.'};}}]);});
+RQ(6,'Cifra los acordes','<p>Escribe mentalmente el cifrado de cada acorde.</p>',[
+ {q:'¿Cómo se cifra este acorde?',pre:chs([K('A',0,'m',3,2)],{gap:60,w:200}),opts:['Am','Am/C','Am/E'],ans:2,why:'Mi en el bajo: segunda inversión.'},
+ {q:'¿Cómo se cifra este acorde?',pre:chs([K('G',0,'M',4,1)],{gap:60,w:200}),opts:['G','G/B','G/D'],ans:1,why:'Si en el bajo.'},
+ {q:'¿Cómo se cifra este acorde?',pre:chs([K('D',0,'m',4)],{gap:60,w:200}),opts:['Dm','D','Dm/F'],ans:0,why:'Re menor en estado fundamental.'}]);
+/* E8 */
+RQ(7,'Aplicación: enlazar acordes con el menor movimiento','<p>Al acompañar, se eligen inversiones para que las notas se muevan poco. De I a IV, el estado fundamental obliga a saltar; con F/C, la nota Do se mantiene y las demás se mueven por grado.</p>'+sbox(chs([K('C',0,'M',4),K('F',0,'M',4),K('C',0,'M',4),K('F',0,'M',4,2)],{gap:60,w:340,lab:['C','F','C','F/C']}))+'<div class="row">'+chp([K('C',0,'M',4),K('F',0,'M',4)],1000)+chp([K('C',0,'M',4),K('F',0,'M',4,2)],1000)+'</div>',
+ [{q:'¿Qué ventaja tiene F/C después de C?',opts:['Una nota común y movimientos cortos','Más notas graves','Cambia la tonalidad'],ans:0,why:'Conserva Do y las otras voces suben por grado.'}]);
+RQ(7,'Evaluación final del tema','',[
+ {q:'La tríada de Si en Do mayor es…',opts:['Mayor','Menor','Disminuida'],ans:2,why:'Si–Re–Fa.'},
+ {q:'La primera inversión de C es…',opts:['C/E','C/G','Em'],ans:0,why:'La tercera en el bajo.'},
+ {q:'Una tríada aumentada tiene…',opts:['Dos terceras mayores','Dos terceras menores','3ª menor y 3ª mayor'],ans:0,why:'0–4–8.'},
+ {q:'El cifrado 6/4 corresponde a…',opts:['2ª inversión','1ª inversión','Estado fundamental'],ans:0,why:'La quinta en el bajo.'},
+ {q:'En Do mayor, el acorde vi es…',opts:['La menor','La mayor','Mi menor'],ans:0,why:'Sexto grado.'}]);
+
+window.AH_LESSON.TOPICS[7]=STEPS;
+})();
+(function(){'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n),l:n.l,o:n.o};}
+function mids(list){return list.split(' ').map(function(x){return N(x).m;});}
+function pm(list){return mids(list).join(',');}
+function pc(cols){return cols.split(' ').map(function(c){return pm(c.replace(/,/g,' '));}).join(';');}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:list.split(' ').map(function(x,i){var n=N(x);return {s:n.s,a:n.a,open:o.open!==false,stem:!!o.stem,lab:o.lab?o.lab[i]:undefined};})});}
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function pb(label,kind,payload,dt){return '<button class="btn ghost sm" data-p="'+kind+'|'+(dt||'')+'|'+payload+'">▶ '+label+'</button>';}
+function wire(b){[].forEach.call(b.querySelectorAll('[data-rh]'),function(x){x.onclick=function(){if(window.AH_RH)window.AH_RH(x.getAttribute('data-rh'),b,x.dataset.ts?x.dataset.ts.split('/').map(Number):null);};});[].forEach.call(b.querySelectorAll('[data-p]'),function(x){x.onclick=function(){var p=x.getAttribute('data-p').split('|'),k=p[0],dt=p[1]?+p[1]:0,pl=p[2];
+ if(k==='chord')A.chord(pl.split(',').map(Number),1.8);else if(k==='seq')A.seq(pl.split(',').map(Number),dt||.4);else if(k==='chords')A.chords(pl.split(';').map(function(c){return c.split(',').map(Number);}),dt>20?dt/1000:(dt||.9));};});}
+function RQ(st,ti,html,qs){var has=qs&&qs.length;S(st,ti,function(b,api){b.innerHTML=html+(has?'<div id="qq" style="margin-top:14px"></div>':'');wire(b);if(has)quiz(b.querySelector('#qq'),api,qs);},!has);}
+function KB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);kbBuild(b,api,rounds);});}
+function ENT(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);entry(b,api,rounds);});}
+function MT(st,ti,intro,head,cats,rows){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);match(w,api,{head:head,cats:cats,rows:rows.map(function(x){return {l:x[0],ans:x[1]};})});});}
+function NE(st,ti,intro,rounds){ENT(st,ti,intro,rounds.map(function(r){var g=N(r.g),w=N(r.w),sig=r.sig||0;return {sig:sig,cols:2,nohit:[0],txt:r.txt,why:r.why,given:[{c:0,s:g.s,a:g.a}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===w.s&&n.a===w.a;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Revisa el número (contando letras) y la calidad (contando semitonos).'};}};}));}
+function EXP(sig,list,txt,why,extra){var ns=list.split(' ').map(N);var o={sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns.map(function(n){return {s:n.s,a:n.a};}))};if(extra)for(var k in extra)o[k]=extra[k];return o;}
+/* acordes */
+var QI={M:[0,4,7],m:[0,3,7],d:[0,3,6],a:[0,4,8],M7:[0,4,7,11],m7:[0,3,7,10],D7:[0,4,7,10],h7:[0,3,6,10],d7:[0,3,6,9],mM7:[0,3,7,11]};
+var QS={M:'',m:'m',d:'°',a:'+',M7:'maj7',m7:'m7',D7:'7',h7:'m7♭5',d7:'°7',mM7:'m(maj7)'};
+function K(l,a,type,o,inv){return {l:l,a:a,t:type,o:o,i:inv||0};}
+function spell(k){var iv=QI[k.t],i0=A.LET.indexOf(k.l),base=A.PC[k.l]+k.a+12*(k.o+1),out=[];iv.forEach(function(x,j){var q=i0+2*j,li=q%7,oo=k.o+Math.floor(q/7);out.push({l:A.LET[li],a:base+x-(A.PC[A.LET[li]]+12*(oo+1)),o:oo});});
+ for(var r=0;r<k.i;r++){var f=out.shift();f.o+=1;out.push(f);}return out;}
+function chm(k){return spell(k).map(A.midOf);}
+function chs(specs,o){o=o||{};var ns=[];specs.forEach(function(k,ci){spell(k).forEach(function(n,j){ns.push({c:ci,s:A.stpOf(n),a:n.a,open:o.open!==false,lab:(j===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||56,notes:ns,cols:specs.length,bar:true,w:o.w});}
+function cif(k){return k.l+A.accS(k.a)+QS[k.t]+(k.i?'/'+(function(){var n=spell(k)[0];return n.l+A.accS(n.a);})():'');}
+function chp(specs,dt){return pb('Escuchar','chords',specs.map(function(k){return chm(k).join(',');}).join(';'),dt||1000);}
+function chb(k){return pb(cif(k),'chord',chm(k).join(','));}
+function ARP(sig,k,txt,why){var ns=spell(k).map(function(n){return {s:A.stpOf(n),a:n.a};});return {sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns)};}
+
+var C7=[K('C',0,'M7',4),K('D',0,'m7',4),K('E',0,'m7',4),K('F',0,'M7',4),K('G',0,'D7',4),K('A',0,'m7',4),K('B',0,'h7',4)];
+function SQ(k,opts,ans,why,q){return {pre:chs([k],{gap:60,w:200}),q:q||'¿Qué acorde de séptima es?',opts:opts,ans:ans,why:why};}
+/* E1 */
+RQ(0,'Qué es un acorde de séptima','<div class="def"><b>Acorde de séptima:</b> tríada con una tercera más superpuesta. Tiene cuatro notas y entre la fundamental y la nota más aguda hay una <b>7ª</b>.</div>'+sbox(chs([K('G',0,'D7',4)],{gap:60,w:220,lab:['Sol 7']}))+'<div class="row">'+chp([K('G',0,'D7',4)])+pb('En arpegio','seq','67,71,74,77',.4)+'</div>',
+ [{q:'¿Cuántas notas tiene un acorde de séptima?',opts:['3','4','5'],ans:1,why:'Tríada más una tercera.'},{q:'¿Qué intervalo hay entre la fundamental y la séptima del acorde?',opts:['Una 7ª','Una 5ª','Una 9ª'],ans:0,why:'De allí el nombre.'}]);
+RQ(0,'Elementos del acorde de séptima','<table class="tbl"><tr><th>Elemento</th><th>Posición</th><th>En Sol 7</th></tr><tr><td>Fundamental</td><td>Base</td><td>Sol</td></tr><tr><td>Tercera</td><td>3ª</td><td>Si</td></tr><tr><td>Quinta</td><td>5ª</td><td>Re</td></tr><tr><td>Séptima</td><td>7ª</td><td>Fa</td></tr></table>',
+ [{q:'En Do7, la séptima es…',opts:['Si','Si♭','La'],ans:1,why:'Do7 = Do–Mi–Sol–Si♭.'},{q:'En Fa7, la quinta es…',opts:['Do','La','Mi♭'],ans:0,why:'Fa–La–Do–Mi♭.'}]);
+KB(0,'Construye séptimas','<p>Forma cada acorde en el teclado.</p>',[{pcs:[0,4,7,10],n:4,txt:'Do7 (dominante)',why:'Do–Mi–Sol–Si♭.'},{pcs:[0,4,7,11],n:4,txt:'Do mayor séptima (maj7)',why:'Do–Mi–Sol–Si.'},{pcs:[2,5,9,0],n:4,txt:'Re menor séptima (m7)',why:'Re–Fa–La–Do.'},{pcs:[11,2,5,9],n:4,txt:'Si semidisminuido (m7♭5)',why:'Si–Re–Fa–La.'}]);
+/* E2 */
+RQ(1,'Los cinco tipos de acorde de séptima','<table class="tbl"><tr><th>Tipo</th><th>Tríada + 7ª</th><th>Semitonos</th><th>Cifrado (Do)</th></tr><tr><td>Mayor</td><td>Mayor + 7ª mayor</td><td>0–4–7–11</td><td>Cmaj7</td></tr><tr><td>Dominante</td><td>Mayor + 7ª menor</td><td>0–4–7–10</td><td>C7</td></tr><tr><td>Menor</td><td>Menor + 7ª menor</td><td>0–3–7–10</td><td>Cm7</td></tr><tr><td>Semidisminuido</td><td>Disminuida + 7ª menor</td><td>0–3–6–10</td><td>Cm7♭5</td></tr><tr><td>Disminuido</td><td>Disminuida + 7ª disminuida</td><td>0–3–6–9</td><td>C°7</td></tr></table>'+sbox(chs([K('C',0,'M7',4),K('C',0,'D7',4),K('C',0,'m7',4),K('C',0,'h7',4),K('C',0,'d7',4)],{gap:52,w:340,lab:['maj7','7','m7','ø7','°7']}))+'<div class="row">'+chp([K('C',0,'M7',4),K('C',0,'D7',4),K('C',0,'m7',4),K('C',0,'h7',4),K('C',0,'d7',4)],1200)+'</div>',
+ [SQ(K('E',0,'m7',4),['Menor (m7)','Dominante (7)','Mayor (maj7)'],0,'Mi–Sol–Si–Re.'),SQ(K('F',0,'M7',4),['Dominante (7)','Mayor (maj7)','Menor (m7)'],1,'Fa–La–Do–Mi.'),SQ(K('G',0,'D7',4),['Dominante (7)','Mayor (maj7)','Menor (m7)'],0,'Sol–Si–Re–Fa.')]);
+MT(1,'Clasifica por las notas','<p>Clasifica cada acorde.</p>','¿Qué acorde es?',['Mayor (maj7)','Dominante (7)','Menor (m7)','Semidisminuido (ø7)','Disminuido (°7)'],[['Do–Mi–Sol–Si♭',1],['Re–Fa–La–Do',2],['Si–Re–Fa–La',3],['Si–Re–Fa–La♭',4],['Fa–La–Do–Mi',0],['Sol–Si–Re–Fa',1]]);
+RQ(1,'Séptimas diatónicas de Do mayor','<p>Con solo las notas de Do mayor se obtienen estas séptimas:</p>'+sbox(chs(C7,{gap:50,w:470,lab:['I','ii','iii','IV','V','vi','vii']}))+'<table class="tbl"><tr><th>Grado</th><th>Acorde</th><th>Tipo</th></tr><tr><td>I</td><td>Cmaj7</td><td>mayor</td></tr><tr><td>ii</td><td>Dm7</td><td>menor</td></tr><tr><td>iii</td><td>Em7</td><td>menor</td></tr><tr><td>IV</td><td>Fmaj7</td><td>mayor</td></tr><tr><td>V</td><td>G7</td><td>dominante</td></tr><tr><td>vi</td><td>Am7</td><td>menor</td></tr><tr><td>vii</td><td>Bm7♭5</td><td>semidisminuido</td></tr></table><div class="row">'+chp(C7,800)+'</div>',
+ [{q:'El único acorde de séptima dominante de la escala mayor está en el grado…',opts:['V','I','IV'],ans:0,why:'Sol–Si–Re–Fa.'},{q:'El acorde del VII grado es…',opts:['Semidisminuido','Menor','Disminuido'],ans:0,why:'Si–Re–Fa–La.'}]);
+RQ(1,'Cifrado de las séptimas','<table class="tbl"><tr><th>Grado</th><th>Romano</th><th>Americano</th></tr><tr><td>I</td><td>I7M o Imaj7</td><td>Cmaj7</td></tr><tr><td>ii</td><td>ii7</td><td>Dm7</td></tr><tr><td>V</td><td>V7</td><td>G7</td></tr><tr><td>vii</td><td>viiø7</td><td>Bm7♭5 o Bø7</td></tr></table>',
+ [{q:'«V7» en Do mayor es…',opts:['G7','Gmaj7','Gm7'],ans:0,why:'Sol con séptima menor.'},{q:'«Am7» es el grado…',opts:['vi7','ii7','iii7'],ans:0,why:'La es el sexto grado.'}]);
+/* E3 */
+ENT(2,'Escribe séptimas en arpegio','<p>Escribe cada acorde en arpegio ascendente.</p>',[ARP(0,K('G',0,'D7',4),'Sol 7 (G7)','Sol–Si–Re–Fa.'),ARP(0,K('D',0,'m7',4),'Re menor séptima (Dm7)','Re–Fa–La–Do.'),ARP(0,K('C',0,'M7',4),'Do mayor séptima (Cmaj7)','Do–Mi–Sol–Si.'),ARP(0,K('F',0,'M7',4),'Fa mayor séptima (Fmaj7)','Fa–La–Do–Mi.')]);
+KB(2,'Séptimas con alteraciones','<p>Forma estas séptimas (usan teclas negras).</p>',[{pcs:[2,6,9,0],n:4,txt:'Re7',why:'Re–Fa♯–La–Do.'},{pcs:[4,7,11,2],n:4,txt:'Mi menor séptima (Em7)',why:'Mi–Sol–Si–Re.'},{pcs:[11,2,5,8],n:4,txt:'Si disminuido (B°7)',why:'Si–Re–Fa–La♭.'},{pcs:[7,11,2,6],n:4,txt:'Sol mayor séptima (Gmaj7)',why:'Sol–Si–Re–Fa♯.'}]);
+NE(2,'Escribe la séptima','<p>Escribe la 7ª pedida sobre la nota dada.</p>',[
+ {g:'G4',w:'F5',txt:'Escribe la <b>7ª menor</b> sobre Sol.',why:'Sol–Fa: 10 semitonos.'},
+ {g:'C4',w:'B4',txt:'Escribe la <b>7ª mayor</b> sobre Do.',why:'Do–Si: 11 semitonos.'},
+ {g:'D4',w:'C5',txt:'Escribe la <b>7ª menor</b> sobre Re.',why:'Re–Do: 10 semitonos.'},
+ {g:'F4',w:'E5',txt:'Escribe la <b>7ª mayor</b> sobre Fa.',why:'Fa–Mi: 11 semitonos.'}]);
+RQ(2,'Método: tríada más séptima','<div class="def"><b>1.</b> Construye la tríada.<br><b>2.</b> Añade la séptima según el tipo.</div>'+table([['Mayor (maj7)','Tríada mayor','7ª mayor'],['Dominante (7)','Tríada mayor','7ª menor'],['Menor (m7)','Tríada menor','7ª menor'],['Semidisminuido','Tríada disminuida','7ª menor'],['Disminuido','Tríada disminuida','7ª disminuida']],['Acorde','Tríada','Séptima']),
+ [{q:'Una tríada disminuida con 7ª menor forma un acorde…',opts:['Semidisminuido','Disminuido','Dominante'],ans:0,why:'Si–Re–Fa–La.'},{q:'Una tríada mayor con 7ª menor forma un acorde…',opts:['Dominante','Mayor','Menor'],ans:0,why:'Es el acorde de séptima de dominante.'}]);
+/* E4 */
+RQ(3,'La séptima es una disonancia','<p>La séptima crea tensión y pide resolver. La regla clásica: <b>la séptima baja por grado conjunto</b>.</p>'+sbox(chs([K('G',0,'D7',4),K('C',0,'M',4)],{gap:70,w:240,lab:['G7','C']}))+'<div class="row">'+chp([K('G',0,'D7',4),K('C',0,'M',4)],1200)+'</div>',
+ [{q:'En G7, la séptima (Fa) resuelve a…',opts:['Mi','Sol','Sol♯'],ans:0,why:'Baja un grado.'},{q:'La séptima de un acorde es una nota…',opts:['Disonante','Consonante'],ans:0,why:'Necesita resolución.'}]);
+RQ(3,'Omisión y duplicación','<p>En cuatro voces, el acorde de séptima completo ya tiene cuatro notas, así que <b>no se duplica ninguna</b>. En tres voces se omite la quinta.</p>'+table([['4 voces','Completo, sin duplicar'],['3 voces','Se omite la quinta (se conservan 3ª y 7ª)']],['Voces','Regla']),
+ [{q:'En tres voces, la nota que se omite es…',opts:['La quinta','La tercera','La séptima'],ans:0,why:'La tercera y la séptima definen el acorde.'}]);
+RQ(3,'Excepciones: el acorde disminuido es simétrico','<p>El acorde de séptima disminuida se forma por <b>terceras menores</b> sucesivas. Divide la octava en cuatro partes iguales, así que cada nota puede interpretarse como fundamental.</p>'+sbox(chs([K('B',0,'d7',4)],{gap:60,w:220}))+'<div class="row">'+chp([K('B',0,'d7',4)])+'</div>',
+ [{q:'El acorde de séptima disminuida está formado por…',opts:['Terceras menores','Terceras mayores','Terceras alternas'],ans:0,why:'0–3–6–9.'}]);
+/* E5 */
+RQ(4,'Sonidos de las séptimas','<p>Cada tipo tiene un color distinto:</p><div class="row">'+chb(K('C',0,'M7',4))+chb(K('C',0,'D7',4))+chb(K('C',0,'m7',4))+chb(K('C',0,'h7',4))+chb(K('C',0,'d7',4))+'</div><p>El maj7 es suave. El 7 pide resolver. El m7 es melancólico. El ø7 y el °7 son oscuros y tensos.</p>',null);
+RQ(4,'Oído: dominante o mayor','<p>Compara Do7 y Cmaj7.</p>',[
+ {q:'¿Cuál es el acorde dominante (7)?',audio:[{l:'A',mode:'chord',m:[60,64,67,70]},{l:'B',mode:'chord',m:[60,64,67,71]}],opts:['A','B'],ans:0,why:'La 7ª menor suena tensa.'},
+ {q:'¿Cuál es el mayor séptima?',audio:[{l:'A',mode:'chord',m:[60,64,67,70]},{l:'B',mode:'chord',m:[60,64,67,71]}],opts:['A','B'],ans:1,why:'La 7ª mayor da un color suave.'},
+ {q:'¿Cuál es el menor séptima?',audio:[{l:'A',mode:'chord',m:[60,64,67,70]},{l:'B',mode:'chord',m:[60,63,67,70]}],opts:['A','B'],ans:1,why:'Tiene la 3ª menor.'}]);
+RQ(4,'Oído: semidisminuido o disminuido','<p>Ambos tienen tríada disminuida; cambia la séptima.</p>',[
+ {q:'¿Cuál es el disminuido (°7)?',audio:[{l:'A',mode:'chord',m:[59,62,65,68]},{l:'B',mode:'chord',m:[59,62,65,69]}],opts:['A','B'],ans:0,why:'La 7ª disminuida (La♭) es la más tensa.'},
+ {q:'¿Cuál es el semidisminuido (ø7)?',audio:[{l:'A',mode:'chord',m:[59,62,65,68]},{l:'B',mode:'chord',m:[59,62,65,69]}],opts:['A','B'],ans:1,why:'La 7ª menor es La natural.'}]);
+/* E6 */
+MT(5,'Análisis: cifrado de séptimas','<p>Identifica el tipo de cada acorde por su cifrado.</p>','¿Qué tipo es?',['Mayor (maj7)','Dominante (7)','Menor (m7)','Semidisminuido (ø7)','Disminuido (°7)'],[['Fmaj7',0],['G7',1],['Dm7',2],['Bm7♭5',3],['A°7',4],['Em7',2]]);
+RQ(5,'Análisis: ii7 – V7 – Imaj7','<p>La progresión más frecuente del jazz, y base de la armonía tonal, en Do mayor:</p>'+sbox(chs([K('D',0,'m7',4),K('G',0,'D7',4),K('C',0,'M7',4)],{gap:70,w:300,lab:['Dm7','G7','Cmaj7']}))+'<div class="row">'+chp([K('D',0,'m7',4),K('G',0,'D7',4),K('C',0,'M7',4)],1100)+'</div>',
+ [{q:'El segundo acorde es…',opts:['Dominante','Menor','Mayor séptima'],ans:0,why:'G7.'},{q:'La fundamental del acorde final es…',opts:['Do','Sol','Re'],ans:0,why:'Cmaj7.'},{q:'Las fundamentales Re–Sol–Do avanzan por…',opts:['Quintas descendentes','Segundas','Terceras'],ans:0,why:'Re a Sol y Sol a Do son 5ªs descendentes (o 4ªs ascendentes).'}]);
+RQ(5,'Análisis: los intervalos de G7','<p>Analiza las terceras de Sol–Si–Re–Fa.</p>'+table([['Sol–Si','3ª mayor'],['Si–Re','3ª menor'],['Re–Fa','3ª menor'],['Si–Fa','5ª disminuida (tritono)']],['Notas','Intervalo']),
+ [{q:'El intervalo Si–Fa dentro de G7 es…',opts:['Un tritono','Una 5ª justa','Una 3ª'],ans:0,why:'Es una 5ª disminuida: el tritono que pide resolución.'},{q:'La 7ª del acorde (Sol–Fa) es…',opts:['Menor','Mayor'],ans:0,why:'10 semitonos.'}]);
+/* E7 */
+S(6,'Compón un acorde de dominante',function(b,api){b.innerHTML='<p>Escribe, en arpegio ascendente, un <b>acorde de séptima de dominante</b> sobre la nota que prefieras. De la fundamental a la tercera hay una 3ª mayor; luego dos terceras menores.</p>';
+ entry(b,api,[{sig:0,cols:4,txt:'Escribe tu acorde.',why:'Una 3ª mayor y dos 3ªs menores.',check:function(ns){if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var m=ns.map(function(n){return A.midOf(A.stepNote(n.s,n.a));}),ok=m[1]-m[0]===4&&m[2]-m[1]===3&&m[3]-m[2]===3&&ns[1].s-ns[0].s===2&&ns[2].s-ns[1].s===2&&ns[3].s-ns[2].s===2;return {ok:ok,cls:ns.map(function(){return ok?'ok':'bad';}),msg:'Semitonos: 4, 3 y 3. Letras: cada nota a una 3ª de la anterior.'};}}]);});
+ENT(6,'Escribe otras séptimas','<p>Escribe estos acordes en arpegio ascendente.</p>',[ARP(0,K('C',0,'m7',4),'Cm7','Do–Mi♭–Sol–Si♭.'),ARP(0,K('E',0,'m7',4),'Em7','Mi–Sol–Si–Re.'),ARP(0,K('D',0,'D7',4),'D7','Re–Fa♯–La–Do.')]);
+RQ(6,'Cifra el acorde','<p>Identifica cada acorde.</p>',[
+ SQ(K('G',0,'D7',4),['G7','Gmaj7','Gm7'],0,'Sol–Si–Re–Fa.','¿Cómo se cifra?'),
+ SQ(K('D',0,'m7',4),['Dm7','D7','Dmaj7'],0,'Re–Fa–La–Do.','¿Cómo se cifra?'),
+ SQ(K('C',0,'M7',4),['C7','Cmaj7','Cm7'],1,'Do–Mi–Sol–Si.','¿Cómo se cifra?')]);
+/* E8 */
+RQ(7,'Aplicación: acompañar con séptimas','<p>Con séptimas se enriquece el acompañamiento. Prueba esta secuencia en Do mayor: Cmaj7 – Am7 – Dm7 – G7.</p>'+sbox(chs([K('C',0,'M7',4),K('A',0,'m7',3),K('D',0,'m7',4),K('G',0,'D7',4)],{gap:60,w:340,lab:['Cmaj7','Am7','Dm7','G7']}))+'<div class="row">'+chp([K('C',0,'M7',4),K('A',0,'m7',3),K('D',0,'m7',4),K('G',0,'D7',4)],1000)+'</div>',
+ [{q:'En esa secuencia, ¿cuál es el único acorde de dominante?',opts:['G7','Dm7','Am7'],ans:0,why:'Es el que tiene 3ª mayor y 7ª menor.'}]);
+RQ(7,'Evaluación final del tema','',[
+ {q:'¿Cuántos tipos de séptima hay en esta unidad?',opts:['3','5','7'],ans:1,why:'maj7, 7, m7, ø7 y °7.'},
+ {q:'El acorde G7 contiene…',opts:['Sol–Si–Re–Fa','Sol–Si♭–Re–Fa','Sol–Si–Re–Fa♯'],ans:0,why:'Tríada mayor y 7ª menor.'},
+ {q:'Bm7♭5 es un acorde…',opts:['Semidisminuido','Disminuido','Dominante'],ans:0,why:'Si–Re–Fa–La.'},
+ {q:'La séptima de un acorde resuelve…',opts:['Bajando por grado','Subiendo por salto'],ans:0,why:'Regla de resolución.'},
+ {q:'El acorde de séptima disminuida está formado por…',opts:['Terceras menores','Terceras mayores'],ans:0,why:'Es simétrico.'}]);
+
+window.AH_LESSON.TOPICS[8]=STEPS;
+})();
+(function(){'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n),l:n.l,o:n.o};}
+function mids(list){return list.split(' ').map(function(x){return N(x).m;});}
+function pm(list){return mids(list).join(',');}
+function pc(cols){return cols.split(' ').map(function(c){return pm(c.replace(/,/g,' '));}).join(';');}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:list.split(' ').map(function(x,i){var n=N(x);return {s:n.s,a:n.a,open:o.open!==false,stem:!!o.stem,lab:o.lab?o.lab[i]:undefined};})});}
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function pb(label,kind,payload,dt){return '<button class="btn ghost sm" data-p="'+kind+'|'+(dt||'')+'|'+payload+'">▶ '+label+'</button>';}
+function wire(b){[].forEach.call(b.querySelectorAll('[data-rh]'),function(x){x.onclick=function(){if(window.AH_RH)window.AH_RH(x.getAttribute('data-rh'),b,x.dataset.ts?x.dataset.ts.split('/').map(Number):null);};});[].forEach.call(b.querySelectorAll('[data-p]'),function(x){x.onclick=function(){var p=x.getAttribute('data-p').split('|'),k=p[0],dt=p[1]?+p[1]:0,pl=p[2];
+ if(k==='chord')A.chord(pl.split(',').map(Number),1.8);else if(k==='seq')A.seq(pl.split(',').map(Number),dt||.4);else if(k==='chords')A.chords(pl.split(';').map(function(c){return c.split(',').map(Number);}),dt>20?dt/1000:(dt||.9));};});}
+function RQ(st,ti,html,qs){var has=qs&&qs.length;S(st,ti,function(b,api){b.innerHTML=html+(has?'<div id="qq" style="margin-top:14px"></div>':'');wire(b);if(has)quiz(b.querySelector('#qq'),api,qs);},!has);}
+function KB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);kbBuild(b,api,rounds);});}
+function ENT(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);entry(b,api,rounds);});}
+function MT(st,ti,intro,head,cats,rows){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);match(w,api,{head:head,cats:cats,rows:rows.map(function(x){return {l:x[0],ans:x[1]};})});});}
+function NE(st,ti,intro,rounds){ENT(st,ti,intro,rounds.map(function(r){var g=N(r.g),w=N(r.w),sig=r.sig||0;return {sig:sig,cols:2,nohit:[0],txt:r.txt,why:r.why,given:[{c:0,s:g.s,a:g.a}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===w.s&&n.a===w.a;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Revisa el número (contando letras) y la calidad (contando semitonos).'};}};}));}
+function EXP(sig,list,txt,why,extra){var ns=list.split(' ').map(N);var o={sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns.map(function(n){return {s:n.s,a:n.a};}))};if(extra)for(var k in extra)o[k]=extra[k];return o;}
+/* acordes */
+var QI={M:[0,4,7],m:[0,3,7],d:[0,3,6],a:[0,4,8],M7:[0,4,7,11],m7:[0,3,7,10],D7:[0,4,7,10],h7:[0,3,6,10],d7:[0,3,6,9],mM7:[0,3,7,11]};
+var QS={M:'',m:'m',d:'°',a:'+',M7:'maj7',m7:'m7',D7:'7',h7:'m7♭5',d7:'°7',mM7:'m(maj7)'};
+function K(l,a,type,o,inv){return {l:l,a:a,t:type,o:o,i:inv||0};}
+function spell(k){var iv=QI[k.t],i0=A.LET.indexOf(k.l),base=A.PC[k.l]+k.a+12*(k.o+1),out=[];iv.forEach(function(x,j){var q=i0+2*j,li=q%7,oo=k.o+Math.floor(q/7);out.push({l:A.LET[li],a:base+x-(A.PC[A.LET[li]]+12*(oo+1)),o:oo});});
+ for(var r=0;r<k.i;r++){var f=out.shift();f.o+=1;out.push(f);}return out;}
+function chm(k){return spell(k).map(A.midOf);}
+function chs(specs,o){o=o||{};var ns=[];specs.forEach(function(k,ci){spell(k).forEach(function(n,j){ns.push({c:ci,s:A.stpOf(n),a:n.a,open:o.open!==false,lab:(j===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||56,notes:ns,cols:specs.length,bar:true,w:o.w});}
+function cif(k){return k.l+A.accS(k.a)+QS[k.t]+(k.i?'/'+(function(){var n=spell(k)[0];return n.l+A.accS(n.a);})():'');}
+function chp(specs,dt){return pb('Escuchar','chords',specs.map(function(k){return chm(k).join(',');}).join(';'),dt||1000);}
+function chb(k){return pb(cif(k),'chord',chm(k).join(','));}
+function ARP(sig,k,txt,why){var ns=spell(k).map(function(n){return {s:A.stpOf(n),a:n.a};});return {sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns)};}
+
+var G7=[0,1,2,3].map(function(i){return K('G',0,'D7',3,i);});
+var IV=['Estado fundamental','1ª inversión','2ª inversión','3ª inversión'],CF=['7','6/5','4/3','4/2'];
+function VQ(k,ans,why,q){return {pre:chs([k],{gap:60,w:200}),q:q||'¿En qué posición está este acorde?',opts:IV.slice(),ans:ans,why:why};}
+/* E1 */
+RQ(0,'Qué son las inversiones de un acorde de séptima','<div class="def">Un acorde de séptima tiene cuatro notas y, por tanto, <b>cuatro posiciones</b>: la nota del bajo puede ser la fundamental, la tercera, la quinta o la séptima.</div>'+sbox(chs(G7,{gap:60,w:340,lab:['G7','G7/B','G7/D','G7/F']}))+'<div class="row">'+chp(G7,1200)+'</div>',
+ [{q:'¿Cuántas posiciones tiene un acorde de séptima?',opts:['3','4','5'],ans:1,why:'Una por cada nota.'},{q:'En G7/B, la nota del bajo es…',opts:['Si','Re','Fa'],ans:0,why:'Si es la tercera de Sol.'}]);
+RQ(0,'Nombres y cifrado','<table class="tbl"><tr><th>Posición</th><th>Bajo</th><th>Cifrado clásico</th><th>Americano</th></tr><tr><td>Fundamental</td><td>Fundamental</td><td>7</td><td>G7</td></tr><tr><td>1ª inversión</td><td>3ª</td><td>6/5</td><td>G7/B</td></tr><tr><td>2ª inversión</td><td>5ª</td><td>4/3</td><td>G7/D</td></tr><tr><td>3ª inversión</td><td>7ª</td><td>4/2 (o 2)</td><td>G7/F</td></tr></table>',
+ [{q:'El cifrado 4/3 corresponde a…',opts:['1ª inversión','2ª inversión','3ª inversión'],ans:1,why:'La quinta en el bajo.'},{q:'G7/F es la…',opts:['2ª inversión','3ª inversión','1ª inversión'],ans:1,why:'La séptima (Fa) en el bajo.'}]);
+S(0,'Escucha las cuatro posiciones',function(b,api){b.innerHTML='<p>Toca cada posición de Do7 y observa su cifrado.</p>';var seen={},info=el('<div class="info">Elige una posición.</div>'),row=el('<div class="row"></div>');
+ var D=[K('C',0,'D7',4),K('C',0,'D7',4,1),K('C',0,'D7',4,2),K('C',0,'D7',4,3)];
+ D.forEach(function(k,i){var bt=el('<button class="btn ghost sm" data-e="'+i+'">'+IV[i]+'</button>');bt.onclick=function(){A.chord(chm(k),1.8);var n=spell(k)[0];info.innerHTML='<b style="color:#fff;font-family:var(--disp);font-size:1.3rem">'+cif(k)+' · '+CF[i]+'</b><br>Bajo: '+n.l+A.accS(n.a);seen[i]=1;if(Object.keys(seen).length>=4)api.done();};row.appendChild(bt);});
+ b.appendChild(row);b.appendChild(info);});
+/* E2 */
+RQ(1,'Intervalos desde el bajo','<p>El cifrado clásico indica los intervalos que forman las notas con el bajo. Se escribe en orden descendente: 6/5 = 6ª y 5ª; 4/3 = 4ª y 3ª; 4/2 = 4ª y 2ª.</p>'+sbox(chs(G7,{gap:60,w:340,lab:['5/3·7','6/5','4/3','4/2']})),
+ [{q:'En 6/5, las notas están a una 6ª y una 5ª del bajo, además de…',opts:['La 3ª','La 7ª','La 8ª'],ans:0,why:'El 3 se sobreentiende: 6/5/3.'},{q:'4/2 significa que desde el bajo hay…',opts:['Una 4ª y una 2ª','Una 6ª y una 5ª','Una 3ª y una 5ª'],ans:0,why:'Las notas están a 2ª, 4ª y 6ª del bajo.'}]);
+MT(1,'Clasifica por el cifrado','<p>Clasifica cada cifrado.</p>','¿Qué posición es?',IV,[['G7',0],['G7/B',1],['G7/D',2],['G7/F',3],['6/5',1],['4/3',2],['4/2',3]]);
+RQ(1,'Inversiones de V7 en Do mayor','<p>El acorde de dominante, con sus cuatro posiciones:</p>'+table([['V7','G7','Sol'],['V6/5','G7/B','Si'],['V4/3','G7/D','Re'],['V4/2','G7/F','Fa']],['Romano','Americano','Bajo']),
+ [{q:'V6/5 en Do mayor tiene en el bajo…',opts:['Sol','Si','Re'],ans:1,why:'La sensible.'},{q:'V4/2 tiene en el bajo…',opts:['Fa','Re','Sol'],ans:0,why:'La séptima.'}]);
+RQ(1,'Reconocer la inversión por el bajo','<p>Busca la nota del bajo y cuenta qué elemento del acorde es.</p>',[VQ(K('G',0,'D7',3,1),1,'El bajo es Si: la tercera.'),VQ(K('G',0,'D7',3,3),3,'El bajo es Fa: la séptima.'),VQ(K('G',0,'D7',3,2),2,'El bajo es Re: la quinta.')]);
+/* E3 */
+ENT(2,'Escribe las inversiones de G7','<p>Escribe cada inversión de Sol7 en arpegio ascendente desde el bajo.</p>',[ARP(0,K('G',0,'D7',3,1),'G7/B (6/5)','Si–Re–Fa–Sol.'),ARP(0,K('G',0,'D7',3,2),'G7/D (4/3)','Re–Fa–Sol–Si.'),ARP(0,K('G',0,'D7',3,3),'G7/F (4/2)','Fa–Sol–Si–Re.'),ARP(0,K('D',0,'m7',4,1),'Dm7/F (6/5)','Fa–La–Do–Re.')]);
+ENT(2,'Escribe por el cifrado americano','<p>Escribe cada acorde en arpegio ascendente desde el bajo.</p>',[ARP(0,K('C',0,'D7',4,1),'C7/E','Mi–Sol–Si♭–Do.'),ARP(0,K('C',0,'D7',4,2),'C7/G','Sol–Si♭–Do–Mi.'),ARP(0,K('C',0,'D7',4,3),'C7/B♭','Si♭–Do–Mi–Sol.'),ARP(0,K('F',0,'D7',4,1),'F7/A','La–Do–Mi♭–Fa.')]);
+RQ(2,'Procedimiento para escribir una inversión','<div class="def"><b>1.</b> Escribe el acorde en estado fundamental.<br><b>2.</b> Elige la nota del bajo.<br><b>3.</b> Las notas inferiores pasan una octava arriba.</div><p>Ejemplo: G7 → G7/B. Sol sube una octava y queda: Si–Re–Fa–Sol.</p>'+sbox(chs([K('G',0,'D7',3),K('G',0,'D7',3,1)],{gap:70,w:240,lab:['G7','G7/B']})),
+ [{q:'Al invertir G7 a G7/B, la nota Sol…',opts:['Sube una octava','Desaparece','Baja una octava'],ans:0,why:'Pasa por encima de Fa.'}]);
+/* E4 */
+RQ(3,'Resolución de las inversiones de V7','<table class="tbl"><tr><th>Acorde</th><th>Resuelve a</th><th>Movimiento del bajo</th></tr><tr><td>V7</td><td>I</td><td>Sol → Do</td></tr><tr><td>V6/5</td><td>I</td><td>Si → Do (sube)</td></tr><tr><td>V4/3</td><td>I</td><td>Re → Do (baja)</td></tr><tr><td>V4/2</td><td>I⁶</td><td>Fa → Mi (baja)</td></tr></table>',
+ [{q:'V6/5 resuelve a I con el bajo…',opts:['Subiendo Si–Do','Bajando Re–Do'],ans:0,why:'La sensible sube a la tónica.'},{q:'V4/2 resuelve a…',opts:['I⁶','I en estado fundamental'],ans:0,why:'La séptima en el bajo baja a Mi, que es la tercera de Do.'}]);
+RQ(3,'La séptima en el bajo','<p>En 4/2 la disonancia está en el bajo. La regla es la de siempre: <b>la séptima baja por grado</b>. Por eso V4/2 va a I⁶ y no a I.</p>'+sbox(chs([K('G',0,'D7',3,3),K('C',0,'M',4,1)],{gap:70,w:240,lab:['V4/2','I6']}))+'<div class="row">'+chp([K('G',0,'D7',3,3),K('C',0,'M',4,1)],1200)+'</div>',
+ [{q:'La séptima Fa resuelve a…',opts:['Mi','Sol','Re'],ans:0,why:'Baja un grado.'}]);
+RQ(3,'Excepciones: reducir voces','<p>En tres voces puede omitirse la quinta (Re). Si la inversión conserva la 3ª (sensible) y la 7ª, el acorde mantiene su fuerza de dominante.</p>',
+ [{q:'Para que un acorde siga siendo de dominante hay que conservar…',opts:['La 3ª y la 7ª','La fundamental y la 5ª'],ans:0,why:'Forman el tritono Si–Fa.'}]);
+/* E5 */
+RQ(4,'Ejemplos: las cuatro resoluciones','<p>Cada inversión de V7 con su resolución:</p>'+sbox(chs([K('G',0,'D7',3),K('C',0,'M',4),K('G',0,'D7',3,1),K('C',0,'M',4),K('G',0,'D7',3,2),K('C',0,'M',4),K('G',0,'D7',3,3),K('C',0,'M',4,1)],{gap:44,w:420,lab:['V7','I','V6/5','I','V4/3','I','V4/2','I6']}))+'<div class="row">'+chp([K('G',0,'D7',3),K('C',0,'M',4)],1000)+chp([K('G',0,'D7',3,1),K('C',0,'M',4)],1000)+chp([K('G',0,'D7',3,2),K('C',0,'M',4)],1000)+chp([K('G',0,'D7',3,3),K('C',0,'M',4,1)],1000)+'</div>',null);
+RQ(4,'Oído: la séptima en el bajo','<p>Escucha tres posiciones de G7.</p>',[
+ {q:'¿Cuál tiene la séptima en el bajo (4/2)?',audio:[{l:'A',mode:'chord',m:[55,59,62,65]},{l:'B',mode:'chord',m:[62,65,67,71]},{l:'C',mode:'chord',m:[65,67,71,74]}],opts:['A','B','C'],ans:2,why:'Fa en el bajo.'},
+ {q:'¿Cuál es la fundamental (7)?',audio:[{l:'A',mode:'chord',m:[55,59,62,65]},{l:'B',mode:'chord',m:[59,62,65,67]},{l:'C',mode:'chord',m:[65,67,71,74]}],opts:['A','B','C'],ans:0,why:'Sol en el bajo.'}]);
+RQ(4,'Oído: 6/5 o 4/3','<p>Compara dos inversiones.</p>',[
+ {q:'¿Cuál es el 6/5?',audio:[{l:'A',mode:'chord',m:[62,65,67,71]},{l:'B',mode:'chord',m:[59,62,65,67]}],opts:['A','B'],ans:1,why:'Si en el bajo.'},
+ {q:'¿Cuál es el 4/3?',audio:[{l:'A',mode:'chord',m:[62,65,67,71]},{l:'B',mode:'chord',m:[59,62,65,67]}],opts:['A','B'],ans:0,why:'Re en el bajo.'}]);
+/* E6 */
+RQ(5,'Análisis: V6/5 – I','<p>Analiza esta cadencia en Do mayor.</p>'+sbox(chs([K('G',0,'D7',3,1),K('C',0,'M',4)],{gap:70,w:240,lab:['V6/5','I']}))+'<div class="row">'+chp([K('G',0,'D7',3,1),K('C',0,'M',4)],1200)+'</div>',
+ [{q:'El bajo del primer acorde es…',opts:['Si','Sol','Fa'],ans:0,why:'La sensible.'},{q:'El bajo de V6/5 a I…',opts:['Sube un semitono','Baja un tono','No se mueve'],ans:0,why:'Si–Do.'}]);
+RQ(5,'Análisis: V4/3 y V4/2','<p>Compara los movimientos del bajo.</p>'+sbox(chs([K('G',0,'D7',3,2),K('C',0,'M',4),K('G',0,'D7',3,3),K('C',0,'M',4,1)],{gap:60,w:340,lab:['V4/3','I','V4/2','I6']}))+'<div class="row">'+chp([K('G',0,'D7',3,2),K('C',0,'M',4)],1000)+chp([K('G',0,'D7',3,3),K('C',0,'M',4,1)],1000)+'</div>',
+ [{q:'En V4/3 → I, el bajo hace…',opts:['Re → Do','Fa → Mi','Si → Do'],ans:0,why:'Baja un grado.'},{q:'En V4/2 → I⁶, el bajo hace…',opts:['Fa → Mi','Re → Do','Sol → Do'],ans:0,why:'La séptima baja.'}]);
+RQ(5,'Análisis: identifica la posición','<p>Mira el bajo (la nota más grave) de cada acorde.</p>',[VQ(K('D',0,'m7',4,2),2,'Bajo La: la quinta de Re menor.'),VQ(K('C',0,'M7',4,1),1,'Bajo Mi: la tercera.'),VQ(K('F',0,'D7',4,3),3,'Bajo Mi♭: la séptima de Fa 7.')]);
+/* E7 */
+S(6,'Compón una inversión 4/3',function(b,api){b.innerHTML='<p>Escribe, en arpegio ascendente, una <b>segunda inversión (4/3) de un acorde de séptima de dominante</b> sobre cualquier nota. Desde el bajo hay una 3ª menor, una 2ª mayor y una 3ª mayor.</p>';
+ entry(b,api,[{sig:0,cols:4,txt:'Escribe tu acorde.',why:'3ª menor + 2ª mayor + 3ª mayor.',check:function(ns){if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var m=ns.map(function(n){return A.midOf(A.stepNote(n.s,n.a));}),ok=m[1]-m[0]===3&&m[2]-m[1]===2&&m[3]-m[2]===4&&ns[1].s-ns[0].s===2&&ns[2].s-ns[1].s===1&&ns[3].s-ns[2].s===2;return {ok:ok,cls:ns.map(function(){return ok?'ok':'bad';}),msg:'Semitonos: 3, 2 y 4. Letras: 3ª, 2ª y 3ª.'};}}]);});
+RQ(6,'Cifra las inversiones','<p>Elige el cifrado americano de cada acorde.</p>',[
+ {pre:chs([K('G',0,'D7',3,1)],{gap:60,w:200}),q:'¿Cómo se cifra?',opts:['G7/B','G7/D','G7/F'],ans:0,why:'El bajo es Si.'},
+ {pre:chs([K('G',0,'D7',3,3)],{gap:60,w:200}),q:'¿Cómo se cifra?',opts:['G7/B','G7/F','G7/D'],ans:1,why:'El bajo es Fa.'},
+ {pre:chs([K('C',0,'D7',4,2)],{gap:60,w:200}),q:'¿Cómo se cifra?',opts:['C7/E','C7/G','C7/B♭'],ans:1,why:'El bajo es Sol.'}]);
+RQ(6,'Cifrado tonal','<p>En Do mayor, completa el cifrado romano.</p>',[
+ {q:'G7/B se cifra…',opts:['V6/5','V4/3','V4/2'],ans:0,why:'Primera inversión.'},
+ {q:'V4/3 en Do mayor tiene en el bajo…',opts:['Re','Si','Fa'],ans:0,why:'La quinta de Sol.'},
+ {q:'V4/2 en Do mayor tiene en el bajo…',opts:['Fa','Si','Re'],ans:0,why:'La séptima.'}]);
+/* E8 */
+RQ(7,'Aplicación: una línea de bajo por grados','<p>Las inversiones permiten que el bajo se mueva por grado conjunto. Prueba I – V4/3 – I⁶: el bajo sube Do–Re–Mi.</p>'+sbox(chs([K('C',0,'M',4),K('G',0,'D7',3,2),K('C',0,'M',4,1)],{gap:70,w:280,lab:['I','V4/3','I6']}))+'<div class="row">'+chp([K('C',0,'M',4),K('G',0,'D7',3,2),K('C',0,'M',4,1)],1000)+'</div>',
+ [{q:'¿Cómo se mueve el bajo en esa progresión?',opts:['Por grado conjunto','Por saltos de quinta'],ans:0,why:'Do, Re, Mi.'}]);
+RQ(7,'Evaluación final del tema','',[
+ {q:'El cifrado 6/5 corresponde a la…',opts:['1ª inversión','2ª inversión','3ª inversión'],ans:0,why:'La tercera en el bajo.'},
+ {q:'G7/F es una…',opts:['3ª inversión','1ª inversión','2ª inversión'],ans:0,why:'La séptima en el bajo.'},
+ {q:'V4/2 resuelve a…',opts:['I⁶','I'],ans:0,why:'Fa baja a Mi.'},
+ {q:'La séptima de un acorde de dominante siempre…',opts:['Baja por grado','Sube por grado'],ans:0,why:'Es la regla de resolución.'},
+ {q:'El 4/3 tiene en el bajo…',opts:['La quinta','La tercera','La séptima'],ans:0,why:'Segunda inversión.'}]);
+
+window.AH_LESSON.TOPICS[9]=STEPS;
+})();
+(function(){'use strict';
+var A=window.AH,C=window.AH_C,el=A.el,quiz=C.quiz,match=C.match,mkKb=C.mkKb,kbBuild=C.kbBuild,entry=C.entry,expectCheck=C.expectCheck;
+var STEPS=[];
+function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
+function N(s){var m=/^([A-G])(#|b)?(\d)$/.exec(s),a=m[2]==='#'?1:m[2]==='b'?-1:0,n={l:m[1],a:a,o:+m[3]};return {s:A.stpOf(n),a:a,m:A.midOf(n),l:n.l,o:n.o};}
+function mids(list){return list.split(' ').map(function(x){return N(x).m;});}
+function pm(list){return mids(list).join(',');}
+function pc(cols){return cols.split(' ').map(function(c){return pm(c.replace(/,/g,' '));}).join(';');}
+function sbox(h){return '<div class="svgbox">'+h+'</div>';}
+function table(rows,heads){return '<div class="scroll"><table class="tbl"><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';}
+function stf(list,o){o=o||{};return A.staff({sig:o.sig||0,gap:o.gap||40,bar:true,notes:list.split(' ').map(function(x,i){var n=N(x);return {s:n.s,a:n.a,open:o.open!==false,stem:!!o.stem,lab:o.lab?o.lab[i]:undefined};})});}
+function cstf(cols,o){o=o||{};var ns=[],cs=cols.split(' ');cs.forEach(function(c,ci){c.split(',').forEach(function(x,k){var n=N(x);ns.push({c:ci,s:n.s,a:n.a,open:o.open!==false,lab:(k===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||52,notes:ns,cols:cs.length,bar:true,w:o.w});}
+function cmid(cols){return cols.split(' ').map(function(c){return c.split(',').map(function(x){return N(x).m;});});}
+function pb(label,kind,payload,dt){return '<button class="btn ghost sm" data-p="'+kind+'|'+(dt||'')+'|'+payload+'">▶ '+label+'</button>';}
+function wire(b){[].forEach.call(b.querySelectorAll('[data-rh]'),function(x){x.onclick=function(){if(window.AH_RH)window.AH_RH(x.getAttribute('data-rh'),b,x.dataset.ts?x.dataset.ts.split('/').map(Number):null);};});[].forEach.call(b.querySelectorAll('[data-p]'),function(x){x.onclick=function(){var p=x.getAttribute('data-p').split('|'),k=p[0],dt=p[1]?+p[1]:0,pl=p[2];
+ if(k==='chord')A.chord(pl.split(',').map(Number),1.8);else if(k==='seq')A.seq(pl.split(',').map(Number),dt||.4);else if(k==='chords')A.chords(pl.split(';').map(function(c){return c.split(',').map(Number);}),dt>20?dt/1000:(dt||.9));};});}
+function RQ(st,ti,html,qs){var has=qs&&qs.length;S(st,ti,function(b,api){b.innerHTML=html+(has?'<div id="qq" style="margin-top:14px"></div>':'');wire(b);if(has)quiz(b.querySelector('#qq'),api,qs);},!has);}
+function KB(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);kbBuild(b,api,rounds);});}
+function ENT(st,ti,intro,rounds){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);entry(b,api,rounds);});}
+function MT(st,ti,intro,head,cats,rows){S(st,ti,function(b,api){b.innerHTML=intro||'';wire(b);var w=el('<div style="margin-top:12px"></div>');b.appendChild(w);match(w,api,{head:head,cats:cats,rows:rows.map(function(x){return {l:x[0],ans:x[1]};})});});}
+function NE(st,ti,intro,rounds){ENT(st,ti,intro,rounds.map(function(r){var g=N(r.g),w=N(r.w),sig=r.sig||0;return {sig:sig,cols:2,nohit:[0],txt:r.txt,why:r.why,given:[{c:0,s:g.s,a:g.a}],check:function(ns){var n=ns[1];if(!n)return {ok:false,cls:[],msg:'Escribe una nota en la columna 2.'};var ok=n.s===w.s&&n.a===w.a;return {ok:ok,cls:['',ok?'ok':'bad'],msg:'Revisa el número (contando letras) y la calidad (contando semitonos).'};}};}));}
+function EXP(sig,list,txt,why,extra){var ns=list.split(' ').map(N);var o={sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns.map(function(n){return {s:n.s,a:n.a};}))};if(extra)for(var k in extra)o[k]=extra[k];return o;}
+/* acordes */
+var QI={M:[0,4,7],m:[0,3,7],d:[0,3,6],a:[0,4,8],M7:[0,4,7,11],m7:[0,3,7,10],D7:[0,4,7,10],h7:[0,3,6,10],d7:[0,3,6,9],mM7:[0,3,7,11]};
+var QS={M:'',m:'m',d:'°',a:'+',M7:'maj7',m7:'m7',D7:'7',h7:'m7♭5',d7:'°7',mM7:'m(maj7)'};
+function K(l,a,type,o,inv){return {l:l,a:a,t:type,o:o,i:inv||0};}
+function spell(k){var iv=QI[k.t],i0=A.LET.indexOf(k.l),base=A.PC[k.l]+k.a+12*(k.o+1),out=[];iv.forEach(function(x,j){var q=i0+2*j,li=q%7,oo=k.o+Math.floor(q/7);out.push({l:A.LET[li],a:base+x-(A.PC[A.LET[li]]+12*(oo+1)),o:oo});});
+ for(var r=0;r<k.i;r++){var f=out.shift();f.o+=1;out.push(f);}return out;}
+function chm(k){return spell(k).map(A.midOf);}
+function chs(specs,o){o=o||{};var ns=[];specs.forEach(function(k,ci){spell(k).forEach(function(n,j){ns.push({c:ci,s:A.stpOf(n),a:n.a,open:o.open!==false,lab:(j===0&&o.lab)?o.lab[ci]:undefined});});});return A.staff({sig:o.sig||0,gap:o.gap||56,notes:ns,cols:specs.length,bar:true,w:o.w});}
+function cif(k){return k.l+A.accS(k.a)+QS[k.t]+(k.i?'/'+(function(){var n=spell(k)[0];return n.l+A.accS(n.a);})():'');}
+function chp(specs,dt){return pb('Escuchar','chords',specs.map(function(k){return chm(k).join(',');}).join(';'),dt||1000);}
+function chb(k){return pb(cif(k),'chord',chm(k).join(','));}
+function ARP(sig,k,txt,why){var ns=spell(k).map(function(n){return {s:A.stpOf(n),a:n.a};});return {sig:sig||0,cols:ns.length,txt:txt,why:why,check:expectCheck(ns)};}
+
+var G=K('G',0,'M',4),G7=K('G',0,'D7',3),CM=K('C',0,'M',4);
+/* E1 */
+RQ(0,'Qué es la progresión V–I','<div class="def"><b>Progresión V–I:</b> paso del acorde de dominante (quinto grado) al de tónica (primer grado). Es el enlace que define la tonalidad: crea una tensión y la resuelve.</div>'+sbox(chs([G,CM],{gap:70,w:240,lab:['V','I']}))+'<div class="row">'+chp([G,CM],1200)+'</div>',
+ [{q:'La progresión V–I va de…',opts:['Dominante a tónica','Tónica a dominante','Subdominante a tónica'],ans:0,why:'Del quinto al primer grado.'},{q:'En Do mayor, V–I es…',opts:['Sol – Do','Do – Sol','Fa – Do'],ans:0,why:'Sol mayor a Do mayor.'}]);
+RQ(0,'Por qué funciona','<p>Tres razones hacen que V–I suene a reposo:</p>'+table([['La sensible','Si sube a Do, medio tono'],['La fundamental','Baja una 5ª (Sol → Do) o sube una 4ª'],['La séptima (V7)','Fa baja a Mi, y el tritono Si–Fa se resuelve']],['Elemento','Movimiento'])+'<div class="row">'+chp([G7,CM],1200)+'</div>',
+ [{q:'La sensible (Si) resuelve a…',opts:['Do','La','Sol'],ans:0,why:'Sube un semitono.'},{q:'El bajo de V a I se mueve…',opts:['Una 5ª descendente','Una 2ª ascendente'],ans:0,why:'Sol a Do.'}]);
+S(0,'Explora V–I en cuatro tonalidades',function(b,api){b.innerHTML='<p>Elige una tonalidad y escucha V–I.</p>';
+ var D=[['Do mayor',0,K('G',0,'M',4),K('C',0,'M',4)],['Sol mayor',1,K('D',0,'M',4),K('G',0,'M',4)],['Fa mayor',-1,K('C',0,'M',4),K('F',0,'M',4)],['Re mayor',2,K('A',0,'M',4),K('D',0,'M',4)]],seen={},row=el('<div class="row"></div>'),box=el('<div class="svgbox"></div>');
+ D.forEach(function(d,i){var bt=el('<button class="btn ghost sm" data-e="'+i+'">'+d[0]+'</button>');bt.onclick=function(){box.innerHTML=chs([d[2],d[3]],{sig:d[1],gap:70,w:240,lab:['V · '+cif(d[2]),'I · '+cif(d[3])]});A.chords([chm(d[2]),chm(d[3])],1.1);seen[i]=1;if(Object.keys(seen).length>=4)api.done();};row.appendChild(bt);});
+ b.appendChild(row);b.appendChild(box);});
+/* E2 */
+RQ(1,'Variantes de la progresión','<table class="tbl"><tr><th>Enlace</th><th>Descripción</th></tr><tr><td>V – I</td><td>Dominante sin séptima. Más suave.</td></tr><tr><td>V7 – I</td><td>Con séptima. Más tensión y más fuerza.</td></tr><tr><td>V⁶ – I</td><td>Dominante en 1ª inversión.</td></tr><tr><td>V6/5, V4/3, V4/2 – I</td><td>Inversiones del V7.</td></tr></table><div class="row">'+chp([G,CM],1000)+chp([G7,CM],1000)+'</div>',
+ [{q:'¿Qué enlace tiene más tensión?',opts:['V7 – I','V – I'],ans:0,why:'La séptima suma una disonancia.'}]);
+RQ(1,'Cadencia auténtica perfecta e imperfecta','<div class="def"><b>Perfecta:</b> V – I, ambos en estado fundamental y con la tónica en la voz más aguda del I.<br><b>Imperfecta:</b> V – I si falta alguna de esas condiciones (inversión, otra nota arriba…).</div>',
+ [{q:'Una cadencia V–I con la 3ª del acorde de tónica en la voz aguda es…',opts:['Imperfecta','Perfecta'],ans:0,why:'La tónica no está arriba.'},{q:'V⁶ – I es una cadencia…',opts:['Imperfecta','Perfecta'],ans:0,why:'El V está invertido.'}]);
+MT(1,'Clasifica las cadencias','<p>Clasifica cada caso.</p>','¿Perfecta o imperfecta?',['Perfecta','Imperfecta'],[['V–I (fundamental, Do arriba)',0],['V6–I',1],['V–I con Mi arriba',1],['V7–I (fundamental, Do arriba)',0],['V4/3–I',1]]);
+RQ(1,'Resolución regular e irregular','<p>Del V7 al I hay dos formas de resolver las voces.</p>'+table([['Regular','Sensible sube a Do, séptima baja a Mi, la quinta baja a Do. I queda incompleto (sin quinta).'],['Irregular','La sensible, en una voz interna, baja a Sol. I queda completo.']],['Tipo','Descripción']),
+ [{q:'En la resolución regular, el acorde de tónica queda…',opts:['Incompleto','Completo'],ans:0,why:'Sin quinta, con la fundamental triplicada.'},{q:'La sensible en una voz interna puede bajar a la 5ª cuando…',opts:['Queremos un I completo','Siempre'],ans:0,why:'Es la resolución irregular.'}]);
+/* E3 */
+KB(2,'Forma V en cada tonalidad','<p>Forma el acorde de dominante de cada tonalidad.</p>',[{pcs:[7,11,2],n:3,txt:'V de Do mayor',why:'Sol–Si–Re.'},{pcs:[9,1,4],n:3,txt:'V de Re mayor',why:'La–Do♯–Mi.'},{pcs:[0,4,7],n:3,txt:'V de Fa mayor',why:'Do–Mi–Sol.'},{pcs:[2,6,9],n:3,txt:'V de Sol mayor',why:'Re–Fa♯–La.'}]);
+ENT(2,'Escribe V7 en arpegio','<p>Escribe el acorde de séptima de dominante de cada tonalidad, en arpegio ascendente. No uses armadura.</p>',[ARP(0,K('C',0,'D7',4),'V7 de Fa mayor (C7)','Do–Mi–Sol–Si♭.'),ARP(0,K('D',0,'D7',4),'V7 de Sol mayor (D7)','Re–Fa♯–La–Do.'),ARP(0,K('A',0,'D7',4),'V7 de Re mayor (A7)','La–Do♯–Mi–Sol.'),ARP(0,K('E',0,'D7',4),'V7 de La mayor (E7)','Mi–Sol♯–Si–Re.')]);
+NE(2,'Resuelve cada voz','<p>Escribe la nota a la que resuelve cada voz del V7 al I.</p>',[
+ {g:'B4',w:'C5',txt:'En Do mayor, la sensible <b>Si</b> resuelve a…',why:'Sube un semitono.'},
+ {g:'F4',w:'E4',txt:'En Do mayor, la séptima <b>Fa</b> resuelve a…',why:'Baja un grado.'},
+ {g:'D5',w:'C5',txt:'En Do mayor, la quinta <b>Re</b> resuelve a…',why:'Baja un grado, a la tónica.'},
+ {g:'F#4',w:'G4',sig:1,txt:'En Sol mayor, la sensible <b>Fa♯</b> resuelve a…',why:'Sube un semitono.'}]);
+RQ(2,'Procedimiento para enlazar','<div class="def"><b>1.</b> Escribe el V (o V7).<br><b>2.</b> Mueve el bajo una 5ª abajo (o 4ª arriba).<br><b>3.</b> Sube la sensible, baja la séptima.<br><b>4.</b> Mueve el resto por el camino más corto.<br><b>5.</b> Revisa: sin quintas ni octavas paralelas.</div>',
+ [{q:'El primer paso para enlazar V–I es…',opts:['Escribir el acorde de V','Escribir el final','Elegir la tonalidad'],ans:0,why:'Sobre él se mueven las voces.'},{q:'Después de colocar el bajo, se mueve…',opts:['La sensible hacia arriba','La sensible hacia abajo'],ans:0,why:'La sensible sube a la tónica.'}]);
+/* E4 */
+RQ(3,'Reglas del enlace V–I','<table class="tbl"><tr><th>Voz</th><th>Regla</th></tr><tr><td>Bajo</td><td>Salta una 5ª abajo o una 4ª arriba</td></tr><tr><td>Sensible</td><td>Sube a la tónica</td></tr><tr><td>Séptima</td><td>Baja por grado</td></tr><tr><td>Voces superiores</td><td>Se mueven por el camino más corto</td></tr></table>',
+ [{q:'La séptima de V7 baja…',opts:['Por grado','Por salto'],ans:0,why:'Resuelve por movimiento conjunto.'},{q:'Las voces superiores se mueven…',opts:['Lo menos posible','Siempre en saltos'],ans:0,why:'Por el camino más corto.'}]);
+RQ(3,'Quintas y octavas paralelas','<div class="def">Dos voces forman <b>quintas</b> (u <b>octavas</b>) paralelas cuando se mueven en la misma dirección manteniendo el mismo intervalo de 5ª (u 8ª) entre acordes consecutivos. En el estilo tonal se evitan.</div><p>Ejemplo prohibido: Do–Sol a Re–La.</p>'+sbox(cstf('C4,G4 D4,A4',{gap:70,w:240,lab:['5ª','5ª']}))+'<div class="row">'+pb('Escuchar','chords',pc('C4,G4 D4,A4'),1000)+'</div>',
+ [{q:'Do–Sol seguido de Re–La son…',opts:['Quintas paralelas','Octavas paralelas','Terceras paralelas'],ans:0,why:'La 5ª se repite en la misma dirección.'},{q:'Las quintas paralelas se…',opts:['Evitan','Prefieren'],ans:0,why:'Hacen perder independencia a las voces.'}]);
+RQ(3,'Excepciones','<p>Casos particulares:</p>'+table([['Sensible en voz interna','Puede bajar a la 5ª del I (resolución irregular)'],['V7 incompleto','Sin quinta, resuelve a un I completo'],['Tonalidad menor','Se usa la sensible alterada: en la menor, Sol♯']],['Caso','Qué ocurre']),
+ [{q:'En La menor, la sensible es…',opts:['Sol♯','Sol natural','Si♭'],ans:0,why:'Se eleva el 7.º grado.'},{q:'Un V7 incompleto omite…',opts:['La quinta','La séptima'],ans:0,why:'Resuelve a un I completo.'}]);
+/* E5 */
+RQ(4,'Ejemplos: V7 – I','<p>Escucha V7–I en Do y en Fa.</p>'+sbox(chs([G7,CM],{gap:70,w:240,lab:['G7','C']}))+sbox(chs([K('C',0,'D7',4),K('F',0,'M',4)],{gap:70,w:240,lab:['C7','F']}))+'<div class="row">'+chp([G7,CM],1200)+chp([K('C',0,'D7',4),K('F',0,'M',4)],1200)+'</div>',null);
+RQ(4,'Oído: ¿V–I o I–V?','<p>Escucha cada enlace.</p>',[
+ {q:'¿Cuál suena a conclusión?',audio:[{l:'A',mode:'chords',m:[[55,59,62],[60,64,67]],dt:1000},{l:'B',mode:'chords',m:[[60,64,67],[55,59,62]],dt:1000}],opts:['A','B'],ans:0,why:'V–I es el que cierra.'},
+ {q:'¿Cuál suena a pregunta (queda abierto)?',audio:[{l:'A',mode:'chords',m:[[55,59,62],[60,64,67]],dt:1000},{l:'B',mode:'chords',m:[[60,64,67],[55,59,62]],dt:1000}],opts:['A','B'],ans:1,why:'Termina en el dominante.'}]);
+RQ(4,'Oído: V–I o V–vi','<p>Una cadencia puede evitar el reposo final.</p>',[
+ {q:'¿Cuál es V–I?',audio:[{l:'A',mode:'chords',m:[[55,59,62],[60,64,67]],dt:1000},{l:'B',mode:'chords',m:[[55,59,62],[57,60,64]],dt:1000}],opts:['A','B'],ans:0,why:'V–vi suena sorpresivo.'}]);
+/* E6 */
+RQ(5,'Análisis: Himno de la alegría en Re mayor','<p>Un final V7–I en Re mayor (armadura de 2♯):</p>'+sbox(chs([K('A',0,'D7',3),K('D',0,'M',4)],{sig:2,gap:70,w:240,lab:['A7','D']}))+'<div class="row">'+chp([K('A',0,'D7',3),K('D',0,'M',4)],1200)+'</div>',
+ [{q:'El acorde A7 es el grado…',opts:['V7','I','IV'],ans:0,why:'La es el quinto grado de Re.'},{q:'La sensible de Re mayor es…',opts:['Do♯','Do','Fa♯'],ans:0,why:'Un semitono por debajo de Re.'}]);
+RQ(5,'Análisis: una progresión en Do mayor','<p>Analiza la secuencia I – IV – V7 – I.</p>'+sbox(chs([CM,K('F',0,'M',4),G7,CM],{gap:60,w:340,lab:['I','IV','V7','I']}))+'<div class="row">'+chp([CM,K('F',0,'M',4),G7,CM],1000)+'</div>',
+ [{q:'¿Qué enlace cierra la progresión?',opts:['V7 – I','IV – V7','I – IV'],ans:0,why:'Es la cadencia final.'},{q:'La fundamental del acorde IV es…',opts:['Fa','Sol','La'],ans:0,why:'Cuarto grado.'}]);
+RQ(5,'Análisis: V–I en modo menor','<p>En La menor, V es mayor porque la sensible Sol♯ sube a La.</p>'+sbox(chs([K('E',0,'M',4),K('A',0,'m',3)],{gap:70,w:240,lab:['E','Am']}))+'<div class="row">'+chp([K('E',0,'M',4),K('A',0,'m',3)],1200)+'</div>',
+ [{q:'El acorde V de La menor es…',opts:['Mi mayor','Mi menor'],ans:0,why:'Lleva la sensible Sol♯.'},{q:'Sol♯ resuelve a…',opts:['La','Fa♯'],ans:0,why:'Sube un semitono.'}]);
+/* E7 */
+ENT(6,'Escribe V–I en arpegio','<p>Escribe V y luego I en arpegio ascendente, sin salir de las notas de cada tonalidad.</p>',[
+ EXP(0,'C4 E4 G4 F4 A4 C5','V–I en Fa mayor (C – F). Sin armadura.','Do–Mi–Sol y Fa–La–Do.'),
+ EXP(1,'D4 F#4 A4 G4 B4 D5','V–I en Sol mayor (D – G), con armadura de 1♯.','Re–Fa♯–La y Sol–Si–Re.'),
+ EXP(2,'A4 C#5 E5 D5 F#5 A5','V–I en Re mayor (A – D), con armadura de 2♯.','La–Do♯–Mi y Re–Fa♯–La.')]);
+S(6,'Compón una melodía con sensible',function(b,api){b.innerHTML='<p>Escribe 4 notas en Do mayor (sin alteraciones). Las dos últimas deben ser Si y Do (sensible y tónica). No hagas saltos mayores que una 6ª.</p>';
+ entry(b,api,[{sig:0,cols:4,txt:'Escribe tu melodía.',why:'Una melodía que cierra con la sensible resolviendo a la tónica.',check:function(ns){if(ns.some(function(n){return !n;}))return {ok:false,cls:[],msg:'Coloca una nota en cada columna.'};
+  var m=ns.map(function(n){return A.midOf(A.stepNote(n.s,n.a));}),ok=true,cls=[],bad=[];m.forEach(function(x,i){cls[i]=[0,2,4,5,7,9,11].indexOf(x%12)<0?'bad':'';if(cls[i]){ok=false;bad.push('la nota '+(i+1)+' no es de Do mayor');}});
+  if(!(m[2]%12===11&&m[3]-m[2]===1)){ok=false;bad.push('las dos últimas deben ser Si y Do (Si sube a Do)');}
+  for(var i=0;i<3;i++)if(Math.abs(m[i+1]-m[i])>9){ok=false;bad.push('hay un salto demasiado grande');break;}
+  if(ok)cls=ns.map(function(){return 'ok';});return {ok:ok,cls:cls,msg:'Revisa: '+bad.join('; ')+'.'};}}]);});
+RQ(6,'Cifra la progresión','<p>Elige el cifrado correcto.</p>',[
+ {q:'En Sol mayor, el V7 es…',opts:['D7','G7','A7'],ans:0,why:'Re con 7ª menor.'},
+ {q:'En Fa mayor, V–I se cifra…',opts:['C – F','F – C','Bb – F'],ans:0,why:'Do mayor a Fa mayor.'},
+ {q:'En Re mayor, V7–I es…',opts:['A7 – D','D7 – G','E7 – A'],ans:0,why:'La séptima de dominante a Re.'}]);
+/* E8 */
+RQ(7,'Aplicación: transportar V–I','<table class="tbl"><tr><th>Tonalidad</th><th>V</th><th>I</th></tr><tr><td>Do mayor</td><td>G</td><td>C</td></tr><tr><td>Sol mayor</td><td>D</td><td>G</td></tr><tr><td>Re mayor</td><td>A</td><td>D</td></tr><tr><td>La mayor</td><td>E</td><td>A</td></tr><tr><td>Fa mayor</td><td>C</td><td>F</td></tr><tr><td>Si♭ mayor</td><td>F</td><td>B♭</td></tr></table>',
+ [{q:'El V de Si♭ mayor es…',opts:['Fa','Mi♭','Do'],ans:0,why:'Cinco notas sobre Si♭.'},{q:'El V de La mayor es…',opts:['Mi','Re','Si'],ans:0,why:'La–Si–Do♯–Re–Mi.'}]);
+RQ(7,'Aplicación: cerrar una melodía','<p>Para terminar una melodía en Do mayor, armoniza los dos últimos sonidos con V (o V7) y I. La sensible Si va con V y la tónica Do con I.</p>'+sbox(stf('E4 D4 B4 C5',{gap:46,stem:true,open:false,lab:['','','V7','I']})),
+ [{q:'El acorde que armoniza el Si es…',opts:['V','IV','ii'],ans:0,why:'Si es la 3ª de Sol mayor.'},{q:'El Do final se armoniza con…',opts:['I','V'],ans:0,why:'La tónica.'}]);
+RQ(7,'Evaluación final del tema','',[
+ {q:'La progresión V–I une…',opts:['Dominante y tónica','Subdominante y tónica'],ans:0,why:'Quinto y primer grado.'},
+ {q:'En V7–I, la séptima…',opts:['Baja por grado','Sube por grado'],ans:0,why:'Resuelve hacia abajo.'},
+ {q:'La sensible de Re mayor es…',opts:['Do♯','Do','Mi'],ans:0,why:'A un semitono de Re.'},
+ {q:'Una cadencia con V en estado fundamental, I en estado fundamental y la tónica arriba es…',opts:['Perfecta','Imperfecta'],ans:0,why:'Cumple las tres condiciones.'},
+ {q:'Las quintas paralelas…',opts:['Se evitan','Son una regla de oro'],ans:0,why:'Restan independencia a las voces.'},
+ {q:'En una tonalidad menor, el V debe tener…',opts:['La sensible alterada','La sensible natural'],ans:0,why:'Para que sea mayor.'}]);
+
+window.AH_LESSON.TOPICS[10]=STEPS;
+})();
+
+(function(){
+'use strict';
 var A=window.AH,L=window.AH_LESSON,el=A.el,KEY='compas_armonia_v1',STEPS=[],T={},TID=1;
 var app=document.getElementById('app');
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};}}
@@ -826,7 +1699,7 @@ var BLOQUES=[
  ['Bloque II · Armonía funcional y conducción de voces',['Séptima de dominante','La frase musical y la estructura','Articulaciones y conducción melódica','El acorde de cuarta y sexta cadencial','Usos de los grados VI y IV⁶','Subdominante y dominante con séptima','El V como área tonal','Usos de los grados III y VII','Secuencias diatónicas','Arpegios y notas de paso']],
  ['Bloque III · Contrapunto, cromatismo y armonía avanzada',['Adornos barrocos','Suspensiones, anticipaciones y notas pedal','Acorde de séptima disminuida','Acorde de séptima semidisminuida','Mixtura modal','Secuencias de acordes de séptima','Modulación diatónica','Novenas, oncenas y trecenas','Acorde napolitano','Sextas aumentadas']],
  ['Bloque IV · Armonía cromática, técnicas contemporáneas y composición',['Mixtura modal avanzada','Nuevas técnicas de modulación','Notación musical avanzada','Notación contemporánea','Acordes por cuartas','Escalas contemporáneas','Armonía por segundas y clusters','Politonalidad y polimodalidad','Armonía no funcional y atonalidad','Análisis y composición musical']]];
-var TM={1:{t:'Tonalidad',sub:['Concepto de tonalidad','Centro tonal y jerarquía de los grados','Tonalidades mayores y menores','Armaduras y círculo de quintas','Funciones tonales']},2:{t:'Escalas',sub:['Escala mayor','Escalas menores: natural, armónica y melódica','Escalas cromáticas','Escalas simétricas','Relación entre escalas y tonalidad']},3:{t:'Modos',sub:['Modos derivados de la escala mayor','Modos derivados de la escala menor melódica','Modos derivados de la escala menor armónica','Características modales','Diferencia entre modalidad y tonalidad']}};
+var TM={10:{t:'Progresión V-I',sub:['Dominante y tónica','V y V7 hacia I','Resolución de las voces','Cadencia auténtica perfecta e imperfecta','V-I en modo menor']},9:{t:'Inversiones de acordes de séptima',sub:['Posiciones del acorde de séptima','Cifrado 7, 6/5, 4/3 y 4/2','Inversiones de V7','Resolución según la posición','Enlaces con bajo por grados']},8:{t:'Acordes de séptima',sub:['La séptima y sus elementos','Tipos de acordes de séptima','Séptimas diatónicas','Construcción y cifrado','Resolución de la séptima']},7:{t:'Acordes e inversiones',sub:['La tríada y sus elementos','Tipos de tríadas','Tríadas diatónicas','Inversiones y cifrado','Duplicaciones y posiciones']},6:{t:'Rítmica, métrica y organización',sub:['Figuras, silencios y puntillo','Compases simples y compuestos','Acentuación y pulso','Anacrusa, síncopa y contratiempo','Organización rítmica de la frase']},5:{t:'Intervalos en una tonalidad',sub:['Intervalos diatónicos','Clasificación de intervalos','Intervalos consonantes y disonantes','Inversión de intervalos','Intervalos característicos de los grados']},1:{t:'Tonalidad',sub:['Concepto de tonalidad','Centro tonal y jerarquía de los grados','Tonalidades mayores y menores','Armaduras y círculo de quintas','Funciones tonales']},2:{t:'Escalas',sub:['Escala mayor','Escalas menores: natural, armónica y melódica','Escalas cromáticas','Escalas simétricas','Relación entre escalas y tonalidad']},4:{t:'Consonancia y disonancia',sub:['Consonancia perfecta e imperfecta','Disonancia','Disonancia melódica y armónica','Resolución de disonancias','Contexto histórico y estilístico']},3:{t:'Modos',sub:['Modos derivados de la escala mayor','Modos derivados de la escala menor melódica','Modos derivados de la escala menor armónica','Características modales','Diferencia entre modalidad y tonalidad']}};
 function use(id){TID=id;STEPS=L.TOPICS[id];st['t'+id]=st['t'+id]||{done:{},sc:{}};T=st['t'+id];}
 function pctOf(id){var s=st['t'+id];return s?Math.round(Object.keys(s.done).length/L.TOPICS[id].length*100):0;}
 function reach(){for(var i=0;i<STEPS.length;i++)if(!T.done[i])return i;return STEPS.length-1;}
@@ -842,8 +1715,8 @@ function home(){
    else blk+='<div class="tp off"><span class="n">'+k+'</span><span>'+t+'<small>Próximamente</small></span></div>';});
   blk+='</div></section>';});
  app.innerHTML='<div class="top"><div class="brand">Compás <span>Armonía</span></div><span class="pill">40 temas · 4 bloques</span></div>'
- +'<div class="hero"><p class="eyebrow">Curso avanzado</p><h1>Armonía, tema a tema</h1><p>Cada tema se estudia en ocho etapas, desde la definición hasta las aplicaciones prácticas. Con teclado, pentagrama y oído. Por ahora están desarrollados los temas 1, 2 y 3.</p></div>'
- +topicCard(1)+topicCard(2)+topicCard(3)
+ +'<div class="hero"><p class="eyebrow">Curso avanzado</p><h1>Armonía, tema a tema</h1><p>Cada tema se estudia en ocho etapas, desde la definición hasta las aplicaciones prácticas. Con teclado, pentagrama y oído. Por ahora están desarrollados los temas 1 a 10.</p></div>'
+ +topicCard(1)+topicCard(2)+topicCard(3)+topicCard(4)+topicCard(5)+topicCard(6)+topicCard(7)+topicCard(8)+topicCard(9)+topicCard(10)
  +'<div class="blk"><h3>Las ocho etapas de cada tema</h3><ol class="etapas">'+L.STAGES.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ol></div>'+blk;
  [].forEach.call(app.querySelectorAll('.go,.tp.on'),function(b){b.onclick=function(){start(+b.dataset.t);};});
  [].forEach.call(app.querySelectorAll('.rs'),function(b){b.onclick=function(){use(+b.dataset.t);T.done={};T.sc={};save();home();};});
