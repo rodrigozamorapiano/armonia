@@ -131,7 +131,7 @@ function keyName(f,m){var t=keyTonic(f,m);return nmA(t.l,t.a)+(m==='m'?' menor':
 var SHL='FCGDAEB',FLL='BEADGCF';
 function sigAlt(f,l){if(f>0&&SHL.indexOf(l)<f)return 1;if(f<0&&FLL.indexOf(l)<-f)return -1;return 0;}
 function sigNames(f){var s=f>0?SHL:FLL,o=[];for(var i=0;i<Math.abs(f);i++)o.push(NM[s[i]]+(f>0?'♯':'♭'));return o;}
-function sigText(f){return f===0?'sin alteraciones':Math.abs(f)+(f>0?' sostenido':' bemol')+(Math.abs(f)>1?'s':'')+' ('+sigNames(f).join(', ')+')';}
+function sigText(f){return f===0?'sin alteraciones':Math.abs(f)+(f>0?' sostenido':' bemol')+(Math.abs(f)>1?(f>0?'s':'es'):'')+' ('+sigNames(f).join(', ')+')';}
 var PB={M:[0,2,4,5,7,9,11],m:[0,2,3,5,7,8,10],h:[0,2,3,5,7,8,11]};
 function midOf(n){return PC[n.l]+n.a+12*(n.o+1);}
 function stpOf(n){return n.o*7+LET.indexOf(n.l)-30;}
@@ -261,8 +261,15 @@ function S(st,ti,r,auto){STEPS.push({st:st,ti:ti,r:r,auto:!!auto});}
 function mapMid(sig,notes){return notes.map(function(n){var a=n.a===undefined?A.sigAlt(sig,A.letterOfStep(n.s)):n.a;return A.midOf(A.stepNote(n.s,a));});}
 /* ---------- componentes ---------- */
 function playAu(a){if(a.mode==='tl'){A.tl(a.s,a.u||.5);return;}if(a.mode==='art'){window.AH_PLAYNOTES(a.m.map(function(m,i){return {m:m,f:Array.isArray(a.f)?a.f[i]:a.f};}),a.dt||.45);return;}if(a.mode==='rh'){if(window.AH_RH)window.AH_RH(a.s,null,a.ts);return;}if(a.mode==='chord')A.chord(a.m,1.8);else if(a.mode==='chords')A.chords(a.m,(a.dt||.9)>20?a.dt/1000:(a.dt||.9));else A.seq(a.m,a.dt||0.42);}
+function shuf(d){if(d.audio||d.noshuf||d.opts.length<2||d.opts.every(function(o){return /^[A-D]$/.test(o);}))return d;
+ var n=d.opts.length,h=0,i,s=d.q;for(i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+ var p=[],x;for(i=0;i<n;i++)p.push(i);
+ for(i=n-1;i>0;i--){h=(h*1103515245+12345)>>>0;x=(h>>>16)%(i+1);var t=p[i];p[i]=p[x];p[x]=t;}
+ if(p[d.ans]===d.ans){p.push(p.shift());}
+ var o2=[],a2=0;p.forEach(function(k,j){o2.push(d.opts[k]);if(k===d.ans)a2=j;});
+ var c={};for(var k in d)c[k]=d[k];c.opts=o2;c.ans=a2;return c;}
 function quiz(box,api,qs){var left=qs.length;
- qs.forEach(function(d){
+ qs.forEach(function(d){d=shuf(d);
   var w=el('<div class="q">'+(d.pre?'<div class="svgbox">'+d.pre+'</div>':'')+'<p class="qt">'+d.q+'</p>'+(d.audio?'<div class="row">'+d.audio.map(function(a,i){return '<button class="btn ghost sm" data-au="'+i+'">▶ '+a.l+'</button>';}).join('')+'</div>':'')+'<div class="opts">'+d.opts.map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o+'</button>';}).join('')+'</div><div class="fb" hidden></div></div>');
   var fb=w.querySelector('.fb'),solved=false,missed=false;
   w.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
@@ -337,7 +344,7 @@ function entry(box,api,rounds){var r=0,ui=el('<div></div>');box.appendChild(ui);
    var res=d.check(notes.map(function(n){return n?{s:n.s,a:eff(n)}:null;}));
    draw(res.cls);
    if(res.ok){locked=true;fb.className='fb ok';fb.innerHTML='Correcto. '+d.why;api.score(!missed);r++;ui.querySelector('#ck').disabled=true;
-    if(r<rounds.length){var nx=el('<div class="row"><button class="btn sm">Siguiente ejercicio</button></div>');nx.firstChild.onclick=round;ui.appendChild(nx);}else api.done();}
+    if(r<rounds.length){var nx=el('<div class="row"><button class="btn sm">Siguiente ejercicio</button></div>');nx.firstChild.onclick=round;ui.appendChild(nx);}else{api.done();if(rounds.more){var mr=el('<div class="row"><button class="btn sm">Seguir practicando</button><span class="lbl">o pulsa «Siguiente» para continuar</span></div>'),mf=rounds.more;mr.firstChild.onclick=function(){rounds=mf();rounds.more=mf;r=0;round();};ui.appendChild(mr);}}}
    else{missed=true;fb.className='fb bad';fb.innerHTML=res.msg;}};
   draw();}
  round();}
@@ -411,8 +418,15 @@ S(2,'Armaduras: el orden de las alteraciones',function(b,api){
  row.querySelector('#p').onclick=function(){var m=A.triad(f,'M',1,4);A.chord([m[0]-12].concat(m),1.8);};
  draw();});
 S(2,'Escribe la armadura',function(b,api){
- b.innerHTML='<p>Ahora tú escribes la armadura. Los botones añaden las alteraciones siempre en el orden correcto.</p>';
- sigBuild(b,api,[{f:4,txt:'Mi mayor',why:'Mi mayor tiene 4 sostenidos: Fa♯, Do♯, Sol♯ y Re♯.'},{f:-3,txt:'Mi♭ mayor',why:'Mi♭ mayor tiene 3 bemoles: Si♭, Mi♭ y La♭.'},{f:2,txt:'si menor',why:'si menor comparte armadura con su relativa Re mayor: Fa♯ y Do♯.'}]);});
+ b.innerHTML='<p>Ahora tú escribes la armadura. Los botones añaden las alteraciones siempre en el orden correcto. Son <b>8 ejercicios</b>; al terminar puedes <b>seguir practicando</b> con otra tanda o continuar con la lección.</p>';
+ var first=[[4,'M'],[-3,'M'],[2,'m'],[-4,'M'],[3,'m'],[-2,'m'],[5,'M'],[-5,'M']],host=el('<div></div>'),n=0;b.appendChild(host);
+ function mk(p){var f=p[0],m=p[1],nm=A.keyName(f,m),rel=m==='m'?A.keyName(f,'M'):A.keyName(f,'m');
+  return {f:f,txt:nm,why:nm.charAt(0).toUpperCase()+nm.slice(1)+' tiene '+A.sigText(f)+(m==='m'?'; comparte armadura con su relativa '+rel+'.':'.')};}
+ function more(){var all=[],f,i,x,t;for(f=-6;f<=6;f++){if(f){all.push([f,'M']);all.push([f,'m']);}}
+  for(i=all.length-1;i>0;i--){x=Math.floor(Math.random()*(i+1));t=all[i];all[i]=all[x];all[x]=t;}return all.slice(0,8);}
+ function batch(ps){n++;host.innerHTML='';var h=el('<div></div>');host.appendChild(h);
+  sigBuild(h,{score:api.score,done:function(){api.done();var r=el('<div class="row"><button class="btn sm" id="mo">Seguir practicando (8 más)</button><span class="lbl">o pulsa «Siguiente» para continuar</span></div>');r.querySelector('#mo').onclick=function(){batch(more());};host.appendChild(r);}},ps.map(mk));}
+ batch(first);});
 S(2,'El círculo de quintas',function(b,api){
  b.innerHTML='<p>El círculo de quintas ordena las tonalidades por su armadura. Al avanzar en sentido horario subes una quinta y añades un sostenido. En sentido antihorario añades un bemol. El anillo exterior son las mayores y el interior sus relativas menores.</p><p class="lbl">Toca 5 sectores distintos para continuar.</p>';
  var sel=null,seen={},box=el('<div class="svgbox"></div>'),info=el('<div class="info">Toca una tonalidad del círculo.</div>');b.appendChild(box);b.appendChild(info);
@@ -496,12 +510,19 @@ S(5,'Análisis: funciones del Canon',function(b,api){
  var ch=['Re (I)','La (V)','si (VI)','fa♯ (III)','Sol (IV)','Re (I)','Sol (IV)','La (V)'],fn=[0,2,0,0,1,0,1,2];
  match(b,api,{head:'Tónica, subdominante o dominante:',cats:['Tónica','Subdominante','Dominante'],rows:ch.map(function(c,i){return {l:c,ans:fn[i]};})});});
 /* ================= ETAPA 7 ================= */
+function scalePool(){var out=[],used={},tries=0;
+ while(out.length<3&&tries<60){tries++;var f=Math.floor(Math.random()*11)-5,m=Math.random()<.5?'M':'m',key=f+m;if(used[key]||(m==='m'&&Math.abs(f)>=5)||(m==='m'&&f>=4))continue;used[key]=1;
+  var t=A.keyTonic(f,m),s0=A.LET.indexOf(t.l)-2,steps=[],alts=[],i;if(s0<-2)s0+=7;
+  for(i=0;i<8;i++){var st=s0+i,a=A.sigAlt(f,A.letterOfStep(st));if(m==='m'&&i===6)a+=1;steps.push(st);alts.push(a);}
+  var nm=A.keyName(f,m)+(m==='m'?' armónica':''),exp=steps.map(function(s,i){return {s:s,a:alts[i]};});
+  out.push({sig:f,cols:8,txt:'Escribe la escala de <b>'+nm+'</b> con su armadura ('+A.sigText(f)+'), de una octava.',why:m==='m'?'La séptima se eleva un semitono sobre la armadura (sensible); fíjate en si lleva ♯ o ♮.':'Las alteraciones de la armadura no se repiten junto a cada nota.',check:expectCheck(exp)});}
+ out.more=scalePool;return out;}
 S(6,'Escribe escalas en el pentagrama',function(b,api){
  function mk(sig,steps,alts,txt,why){var exp=steps.map(function(s,i){return {s:s,a:alts[i]};});return {sig:sig,cols:8,txt:txt,why:why,check:expectCheck(exp)};}
- entry(b,api,[
+ var R=[
   mk(1,[2,3,4,5,6,7,8,9],[0,0,0,0,0,0,1,0],'Escribe la escala de <b>Sol mayor</b> con su armadura, de Sol4 a Sol5.','El Fa♯ no necesita sostenido junto a la nota: ya está en la armadura.'),
   mk(0,[3,4,5,6,7,8,9,10],[0,0,0,0,0,0,1,0],'Escribe la escala de <b>la menor armónica</b>, de La4 a La5.','La armadura no tiene alteraciones, así que el Sol♯ se escribe con su propio sostenido.'),
-  mk(-2,[4,5,6,7,8,9,10,11],[-1,0,0,-1,0,0,0,-1],'Escribe la escala de <b>Si♭ mayor</b> con su armadura, de Si♭4 a Si♭5.','Los bemoles Si♭ y Mi♭ ya vienen en la armadura.')]);});
+  mk(-2,[4,5,6,7,8,9,10,11],[-1,0,0,-1,0,0,0,-1],'Escribe la escala de <b>Si♭ mayor</b> con su armadura, de Si♭4 a Si♭5.','Los bemoles Si♭ y Mi♭ ya vienen en la armadura.')];R.more=scalePool;entry(b,api,R);});
 S(6,'Compón un motivo en Fa mayor',function(b,api){
  b.innerHTML='<p>Compón un motivo de 4 notas en <b>Fa mayor</b> (armadura con Si♭). Reglas: usa notas de la escala y termina en la tónica, Fa.</p>';
  var scp=[5,7,9,10,0,2,4];
@@ -1006,6 +1027,223 @@ S(7,'Evaluación final del tema',function(b,api){quiz(b,api,[
  {q:'En el acorde de Sol7 (Sol–Si–Re–Fa), la séptima baja a…',opts:['Mi','Sol','La'],ans:0,why:'Fa baja un grado, a Mi.'},
  {q:'La 4ª justa contra el bajo se trata como…',opts:['Consonancia','Disonancia en contrapunto estricto','Disonancia perfecta'],ans:1,why:'Por eso se cuida su colocación.'}]);});
 window.AH_LESSON.TOPICS[4]=STEPS;
+})();
+
+/* Evaluaciones finales de síntesis: preguntas de aplicación, distintas de las de las lecciones. La respuesta correcta va primero; el motor la mezcla al mostrarla. */
+(function(){
+function Q(q,ok,bad,why){return {q:q,opts:[ok].concat(bad),ans:0,why:why};}
+window.AH_FINALS={
+1:[
+ Q('Una pieza lleva tres sostenidos en la armadura. Su melodía insiste en Fa♯ y aparece con frecuencia Mi♯ como nota de tensión. ¿Cuál es la tonalidad?','Fa♯ menor',['La mayor','Si menor'],'Tres sostenidos corresponden a La mayor o a Fa♯ menor. El Mi♯ es la sensible de Fa♯, por lo que el centro es Fa♯ menor.'),
+ Q('Para pasar de Sol mayor a su tonalidad de dominante, la armadura…','Añade un sostenido (Do♯)',['Añade un bemol','Se mantiene igual','Quita el Fa♯'],'Sol mayor (1♯) → Re mayor (2♯): se añade Do♯, la sensible de la nueva tonalidad.'),
+ Q('La tonalidad relativa menor de Sol mayor y su homónima menor son, respectivamente…','Mi menor y sol menor',['Sol menor y mi menor','Mi menor y mi mayor','Si menor y sol menor'],'La relativa comparte armadura (Mi menor, 1♯); la homónima comparte tónica (sol menor, 2♭).'),
+ Q('¿Cuántas alteraciones tiene la armadura de Re♭ mayor?','Cinco bemoles',['Cinco sostenidos','Dos bemoles','Siete bemoles'],'Si♭, Mi♭, La♭, Re♭ y Sol♭. Es enarmónica de Do♯ mayor (7 sostenidos).'),
+ Q('En Mi♭ mayor, la sensible es…','Re',['Re♭','Mi♭','Fa'],'La sensible es el 7.º grado, a un semitono de la tónica: Re natural.'),
+ Q('El 7.º grado de la menor armónica de do menor se escribe…','Si♮, que sube un semitono a la tónica',['Si♭, igual que la armadura','Si♮, que baja a La♭'],'La alteración ascendente del 7.º grado crea la sensible y, con ella, la función de dominante.')],
+2:[
+ Q('En re menor armónica, el intervalo entre el 6.º y el 7.º grado es…','Una segunda aumentada (Si♭–Do♯)',['Una segunda mayor','Una tercera menor','Un semitono diatónico'],'La 2.ª aumentada es el rasgo característico de la menor armónica.'),
+ Q('La menor melódica de la menor, al descender, se toca como…','Menor natural (sin Fa♯ ni Sol♯)',['Menor armónica','Escala cromática','Menor melódica ascendente invertida'],'En descenso desaparecen las alteraciones: Sol♮ y Fa♮.'),
+ Q('La escala de tonos enteros contiene…','Seis notas distintas y todos los intervalos de tono',['Siete notas y dos semitonos','Doce notas','Cinco notas y un tritono'],'Es simétrica: solo existen dos transposiciones distintas.'),
+ Q('El 7.º grado de Fa♯ mayor se escribe…','Mi♯',['Fa♮','Mi♮','Re𝄪'],'Hay que usar una letra por grado: Mi♯ y no Fa♮.'),
+ Q('La escala cromática ascendente se escribe, por convención, con…','Sostenidos (y bemoles al descender)',['Solo bemoles','Solo sostenidos en ambas direcciones'],'La grafía sigue la tendencia melódica del movimiento.'),
+ Q('Una escala de estructura T–T–S–T–T–T–S es…','La escala mayor',['La menor natural','La menor armónica'],'Es la sucesión de tonos y semitonos de la escala mayor.')],
+3:[
+ Q('Re dórico, escrito con la armadura de Do mayor, difiere de re menor natural en…','El 6.º grado (Si♮ frente a Si♭)',['El 3.er grado','El 2.º grado','No difiere'],'El dórico tiene una 6.ª mayor sobre la tónica; la menor natural, una 6.ª menor.'),
+ Q('La nota característica del lidio respecto a la escala mayor es…','El 4.º grado aumentado (♯4)',['El 7.º grado rebajado','El 2.º grado rebajado'],'Fa♯ sobre Do lidio, por ejemplo.'),
+ Q('Sol mixolidio se escribe con…','La armadura de Do mayor y la tónica en Sol',['Un sostenido','Dos bemoles'],'Es el 5.º modo de Do mayor.'),
+ Q('El frigio se distingue por…','El 2.º grado menor (♭2)',['El 4.º grado aumentado','El 6.º grado mayor'],'Un semitono sobre la tónica; origen del acorde napolitano.'),
+ Q('El locrio rara vez sirve como modo base porque…','Su 5.º grado es disminuido y su tríada de tónica es disminuida',['No tiene tercera','Es idéntico al dórico'],'La quinta disminuida impide una tónica estable.'),
+ Q('Do mixolidio y Do mayor difieren únicamente en…','El 7.º grado (Si♭ frente a Si♮)',['El 4.º grado','El 3.er grado'],'Es la nota característica del mixolidio.')],
+4:[
+ Q('En armonía a tres o más voces, una cuarta justa entre el bajo y una voz superior se trata como…','Disonancia respecto al bajo',['Consonancia perfecta','Consonancia imperfecta'],'La cuarta con el bajo pide resolución (4–3, por ejemplo).'),
+ Q('Entre los intervalos siguientes, es consonancia perfecta…','La quinta justa',['La tercera mayor','La sexta menor','La séptima menor'],'Unísono, quinta y octava son las consonancias perfectas.'),
+ Q('Quintas paralelas entre dos voces se evitan porque…','Reducen la independencia de las voces',['Son disonantes','Duplican la sensible'],'Dos voces en movimiento paralelo a quinta se perciben como una sola línea.'),
+ Q('La cuarta aumentada Fa–Si, en Do mayor, tiende a resolver en…','Mi–Do',['Fa–Re','Sol–Sol'],'Si sube a Do y Fa baja a Mi.'),
+ Q('Una octava aumentada (Do–Do♯) es…','Disonancia',['Consonancia perfecta','Consonancia imperfecta'],'Por su alteración deja de ser perfecta.'),
+ Q('La disonancia se entiende en la práctica tonal como…','Tensión que reclama resolución',['Un error de escritura','Un sonido sin función'],'Define el movimiento armónico.')],
+5:[
+ Q('El intervalo Do–Fa♯ es…','Una cuarta aumentada',['Una quinta disminuida','Una quinta justa','Una cuarta justa'],'Cuarta por letra, seis semitonos: aumentada (enarmónico de una 5.ª disminuida).'),
+ Q('La inversión de una tercera menor es…','Una sexta mayor',['Una sexta menor','Una tercera mayor'],'Las calidades se invierten: m → M y las especies suman 9.'),
+ Q('Si♭–Re♯ es…','Una tercera aumentada',['Una tercera mayor','Una cuarta justa'],'Tres letras y cinco semitonos: la tercera mayor tiene cuatro.'),
+ Q('Una décima menor sobre Do es…','Mi♭ (octava más tercera menor)',['Re♭','La♭'],'La décima es el intervalo compuesto de una tercera.'),
+ Q('Fa♯–Re♭ es…','Una sexta disminuida',['Una sexta menor','Una quinta aumentada'],'Seis letras, siete semitonos.'),
+ Q('Una segunda aumentada y una tercera menor son…','Enarmónicas (suenan igual pero se escriben distinto)',['Idénticas','Imposibles en la misma tonalidad'],'Mismo sonido, distinta función y grafía.')],
+6:[
+ Q('El compás de 6/8 es…','Compuesto binario',['Simple ternario','Compuesto ternario','Simple binario'],'Dos pulsos de negra con puntillo, subdivisión ternaria.'),
+ Q('Un compás de 9/8 tiene…','Tres pulsos ternarios',['Nueve pulsos','Cuatro pulsos binarios'],'Tres grupos de tres corcheas.'),
+ Q('Una obra que comienza con anacrusa de una negra en 3/4 termina…','Con un último compás incompleto (dos negras) que compensa la anacrusa',['Con un compás completo','Sin silencios'],'La anacrusa y el compás final suman un compás.'),
+ Q('La síncopa consiste en…','Articular un tiempo débil y prolongarlo sobre el fuerte siguiente',['Acentuar el primer tiempo','Doblar la duración del compás'],'Desplaza el acento hacia el tiempo débil.'),
+ Q('La hemiola es…','El reagrupamiento de dos compases ternarios en tres grupos binarios',['Un tresillo en compás simple','Una anacrusa doble'],'3+3 se escucha 2+2+2.'),
+ Q('Un tresillo de corcheas en un compás simple ocupa…','El valor de una negra',['El valor de una blanca','El de dos negras'],'Tres corcheas en lugar de dos.')],
+7:[
+ Q('La tríada de Re menor en primera inversión se cifra…','6, con Fa en el bajo',['6/4, con La en el bajo','6, con Re en el bajo'],'Primera inversión: la tercera en el bajo.'),
+ Q('En estado fundamental y cuatro voces, la nota que normalmente se duplica es…','La fundamental',['La tercera','La quinta'],'Es la más estable y favorece la claridad armónica.'),
+ Q('La tríada disminuida se emplea habitualmente…','En primera inversión',['Solo en estado fundamental','En segunda inversión sobre el bajo'],'Evita la quinta disminuida entre el bajo y la voz superior.'),
+ Q('Un acorde con Sol en el bajo y las notas Do y Mi es…','I en segunda inversión (6/4)',['V en estado fundamental','I en primera inversión'],'Las notas son Do–Mi–Sol con la quinta en el bajo.'),
+ Q('La tríada aumentada (Do–Mi–Sol♯) es peculiar porque…','Está formada por dos terceras mayores y es simétrica',['Tiene quinta justa','Es consonante'],'Sus inversiones son otras tríadas aumentadas.'),
+ Q('La posición cerrada se caracteriza por…','Un intervalo menor que una octava entre las tres voces superiores',['El bajo más agudo','Tres terceras seguidas'],'Las voces superiores se ubican en el menor espacio posible.')],
+8:[
+ Q('El acorde de séptima de dominante sobre Do es…','Do–Mi–Sol–Si♭',['Do–Mi–Sol–Si','Do–Mi♭–Sol–Si♭'],'Tríada mayor y séptima menor.'),
+ Q('Si7♭5 con séptima menor y Si°7 se diferencian en…','La séptima: La♮ frente a La♭',['La tercera','La fundamental'],'El semidisminuido tiene 7.ª menor; el disminuido, 7.ª disminuida.'),
+ Q('El acorde m(maj7) está formado por…','Tríada menor con séptima mayor',['Tríada mayor con séptima menor','Tríada disminuida con séptima mayor'],'Ejemplo: Do–Mi♭–Sol–Si.'),
+ Q('Los intervalos de Cmaj7 sobre la fundamental son…','Tercera mayor, quinta justa y séptima mayor',['Tercera menor, quinta justa y séptima menor','Tercera mayor y séptima menor'],'Do–Mi–Sol–Si.'),
+ Q('En cuatro voces, si en V7 se omite la quinta…','Se duplica la fundamental',['Se duplica la séptima','Se omite la tercera'],'La tercera y la séptima son esenciales.'),
+ Q('¿Cuántos acordes de séptima disminuida distintos existen?','Tres',['Doce','Cuatro'],'Por ser simétrico, se repiten en grupos de tres semitonos.')],
+9:[
+ Q('La cifra 6/5 indica…','Primera inversión de un acorde de séptima',['Segunda inversión','Tercera inversión'],'Tercera en el bajo: intervalos de 5.ª y 6.ª sobre el bajo.'),
+ Q('G7 en 4/2 tiene en el bajo…','Fa (la séptima)',['Re','Si'],'Tercera inversión: la séptima en el bajo.'),
+ Q('V4/2 resuelve normalmente en…','I6, con el bajo Fa bajando a Mi',['I estado fundamental con el bajo subiendo','vi'],'La séptima en el bajo baja por grado.'),
+ Q('El bajo del V6/5 es…','Si, la sensible, que sube a Do',['Re','Sol'],'La sensible en el bajo asciende a la tónica.'),
+ Q('G7/B (cifrado americano) es…','G7 en primera inversión',['G7 en estado fundamental','Si menor'],'Después de la barra se indica la nota del bajo.'),
+ Q('La cifra 4/3 señala intervalos sobre el bajo de…','Tercera y cuarta (sobre el bajo Re: Fa y Sol)',['Quinta y sexta','Segunda y cuarta'],'Segunda inversión de G7: Re–Fa–Sol–Si.')],
+10:[
+ Q('Una cadencia auténtica perfecta requiere…','V–I en estado fundamental con la tónica en la voz superior',['V–I con cualquier posición','IV–I'],'Ambos acordes en estado fundamental y la tónica como nota final de la melodía.'),
+ Q('La sensible en voz interior de V–I puede descender a la quinta del I cuando…','El I queda completo',['No se necesita nada','El acorde V está invertido'],'Es una excepción aceptada para completar el acorde final.'),
+ Q('En la menor, el acorde de dominante es…','Mi mayor (Mi–Sol♯–Si)',['Mi menor','Mi disminuido'],'Se eleva el 7.º grado para formar la sensible.'),
+ Q('Si V7 se escribe completo, el I resultante suele quedar…','Incompleto (sin quinta, con fundamental triplicada)',['Completo con la sensible duplicada','Con la tercera omitida'],'La sensible sube y la séptima baja; la quinta se omite.'),
+ Q('Una semicadencia es…','Una cadencia que termina en V',['Una cadencia que termina en IV','V–vi'],'Suspensión sobre la dominante.'),
+ Q('Las quintas paralelas en V–I se evitan…','Moviendo las voces por el camino más corto',['Duplicando la sensible','Quitando el bajo'],'Se conservan notas comunes y las demás voces se mueven por grado.')],
+11:[
+ Q('En la resolución irregular de V7, la sensible interior puede descender a la quinta del I si…','El acorde de tónica queda completo',['El V7 está en 6/5','La séptima asciende'],'Es una excepción habitual cuando el movimiento evita un mal doblamiento.'),
+ Q('En V7–vi (cadencia rota), la sensible…','Sube a la tónica; la séptima baja a la tercera de vi',['Sube a la mediante','Baja a Sol'],'Se mantienen las tendencias de la sensible y de la séptima.'),
+ Q('El tritono del V7 de Do mayor (Si–Fa) resuelve en…','Do–Mi (Si sube, Fa baja)',['Re–Fa','Sol–Si'],'El intervalo disonante se resuelve hacia el interior.'),
+ Q('Para V7 en La menor, las notas son…','Mi–Sol♯–Si–Re',['Mi–Sol–Si–Re','Mi–Sol♯–Si–Re♯'],'Tríada mayor con séptima menor y sensible elevada.'),
+ Q('La séptima del V7 debe…','Descender por grado conjunto',['Subir por grado conjunto','Quedarse como nota común'],'Es la tendencia de toda séptima.'),
+ Q('Un V7 sin quinta, resuelto a un I completo, se logra…','Duplicando la fundamental en el V7',['Duplicando la séptima','Omitiendo la fundamental'],'La tercera y la séptima son las notas esenciales.')],
+12:[
+ Q('Un período paralelo se distingue de uno contrastante porque…','Sus dos frases comienzan con el mismo material',['Termina en semicadencia','Tiene cuatro frases'],'En el contrastante, el consecuente cambia de material.'),
+ Q('El antecedente de un período termina típicamente en…','Semicadencia (V)',['Cadencia auténtica perfecta','Cadencia rota'],'Plantea una pregunta que el consecuente responde.'),
+ Q('El orden estructural de menor a mayor es…','Motivo – semifrase – frase – período',['Frase – motivo – período – semifrase','Período – frase – motivo'],'Es la jerarquía formal básica.'),
+ Q('Un período clásico habitual consta de…','8 compases: 4 + 4',['5 + 3','6 + 2'],'La simetría es el ideal clásico.'),
+ Q('Una frase irregular puede deberse a…','Una extensión o elisión de compases',['Un cambio de tonalidad obligatorio','La falta de cadencia'],'Rompe la simetría para dar variedad.'),
+ Q('El consecuente de un período clásico cierra normalmente con…','Cadencia auténtica',['Semicadencia','Cadencia plagal'],'Resuelve la tensión del antecedente.')],
+13:[
+ Q('La ligadura de expresión (fraseo) se diferencia de la de prolongación en que…','Une notas de distinta altura y no suma duraciones',['Une dos notas iguales','Suma las duraciones'],'La de prolongación une notas de la misma altura.'),
+ Q('El portato combina…','Legato y ataque separado leve',['Staccato y acento','Legato y trémolo'],'Notas con una separación mínima.'),
+ Q('El acento «>» indica…','Un ataque enfatizado',['Un diminuendo','Una respiración'],'Se destaca la nota respecto a las vecinas.'),
+ Q('La respiración musical se coloca…','Al final de la frase, nunca en medio de un motivo',['Después de cada compás','Antes de cada nota larga'],'Respeta la estructura formal.'),
+ Q('El tenuto pide…','Sostener el valor completo de la nota',['Acortar la nota','Acentuarla y acortarla'],'Se mantiene la duración con un ligero peso.'),
+ Q('Un staccato reduce la duración efectiva de la nota a…','Una fracción de su valor',['El doble de su valor','Su valor exacto con acento'],'Se separa del sonido siguiente.')],
+14:[
+ Q('El I6/4 cadencial se escribe sobre un bajo en…','El 5.º grado (Sol en Do mayor)',['La tónica','La mediante'],'El bajo sostiene la dominante.'),
+ Q('Sus notas Do y Mi resuelven respectivamente en…','Si y Re (sobre V)',['Re y Fa','La y Do'],'Las notas del I6/4 son apoyaturas a V.'),
+ Q('Se duplica en el I6/4 cadencial…','El bajo (Sol)',['La tónica','La tercera'],'La quinta es la nota estable del acorde.'),
+ Q('El 6/4 cadencial aparece…','En tiempo fuerte, antes de V',['En tiempo débil, tras V','Siempre en final de pieza'],'Su efecto es el de apoyatura sobre el acorde de dominante.'),
+ Q('Los tipos de acorde de 6/4 son…','Cadencial, de paso, de pedal (bordadura) y arpegiado',['Mayor, menor y disminuido','Solo el cadencial'],'Cada uno depende de su contexto armónico.'),
+ Q('Su función real es…','Dominante con apoyaturas',['Tónica','Subdominante'],'Funciona como V con 6.ª y 4.ª no resueltas.')],
+15:[
+ Q('En la cadencia rota V–vi, la nota que se duplica en el acorde vi es…','La tercera (Do)',['La fundamental','La quinta'],'Evita doblar la sensible y mantiene las tendencias.'),
+ Q('El IV6 tiene en el bajo…','La (tercera de Fa)',['Fa','Do'],'Primera inversión del acorde de subdominante.'),
+ Q('El grado vi puede sustituir a la tónica porque…','Comparte dos notas con ella (Do y Mi)',['Es dominante','No tiene tercera'],'Las notas comunes favorecen la función de tónica.'),
+ Q('La progresión I–vi–IV–V es de funciones…','Tónica – tónica – subdominante – dominante',['Tónica – subdominante – tónica – dominante','Dominante – tónica – subdominante – dominante'],'El vi mantiene la función de tónica.'),
+ Q('En Do mayor, el bajo La del IV6 conduce por grado conjunto, sobre todo, a…','Si (el bajo de V6)',['Fa','Do'],'Permite un bajo por grados conjuntos.'),
+ Q('El vi en Do mayor es…','La menor',['La mayor','Mi menor'],'Sexto grado de la escala.')],
+16:[
+ Q('La séptima del ii7 en Do mayor (Do) resuelve en…','Si, tercera del V7',['La','Re'],'Baja por grado conjunto.'),
+ Q('Entre Dm7 y G7, la nota común es…','Fa',['La','Re'],'Es la tercera de Dm7 y la séptima de G7.'),
+ Q('El IVmaj7 es una séptima…','Mayor',['Menor','Dominante'],'Fa–La–Do–Mi.'),
+ Q('La progresión ii7–V7–Imaj7 suele conducir a…','La cadencia final con la sensible y la séptima resueltas',['La subdominante','Un nuevo ii7'],'Es el modelo funcional básico.'),
+ Q('El orden funcional natural es…','Subdominante, dominante, tónica',['Tónica, dominante, subdominante','Dominante, subdominante, tónica'],'S → D → T.'),
+ Q('El ii7 suele ir seguido de…','V7',['I','vi'],'La progresión ii–V es la más frecuente.')],
+17:[
+ Q('V7/V en Do mayor es…','Re–Fa♯–La–Do',['Re–Fa–La–Do','Sol–Si–Re–Fa'],'El Fa♯ es la sensible de Sol.'),
+ Q('V7/vi en Do mayor es…','Mi–Sol♯–Si–Re',['Mi–Sol–Si–Re','La–Do♯–Mi–Sol'],'El Sol♯ es la sensible de La menor.'),
+ Q('Una dominante secundaria se reconoce porque…','Contiene una alteración cromática ajena a la tonalidad',['Está en tiempo fuerte','Es mayor'],'La alteración marca la sensible secundaria.'),
+ Q('La tonicización se diferencia de la modulación en que…','No se confirma una nueva tonalidad',['Cambia de armadura','Usa tonalidad lejana'],'La alteración es pasajera.'),
+ Q('El vii°/V en Do mayor es…','Fa♯–La–Do',['Fa–La–Do','Si–Re–Fa'],'Tríada disminuida sobre la sensible de Sol.'),
+ Q('V7/V resuelve normalmente en…','V',['I','IV'],'Es la dominante de la dominante.')],
+18:[
+ Q('El vii° se utiliza habitualmente…','En primera inversión (vii°6)',['En estado fundamental','En segunda inversión'],'Evita la quinta disminuida con el bajo.'),
+ Q('El iii en Do mayor (Mi menor) tiene función…','Ambigua: tónica o dominante, según el contexto',['Exclusivamente subdominante','Solo tónica'],'Comparte notas con I y con V.'),
+ Q('En vii°6–I, la nota que suele duplicarse es…','La tercera de vii° (Re), nunca la sensible',['La sensible','La quinta'],'La sensible no se duplica.'),
+ Q('El vii° puede interpretarse como…','Un V7 sin fundamental',['Un IV con sexta','Un ii con séptima'],'Si–Re–Fa son las notas superiores del V7.'),
+ Q('El enlace I–iii–vi–IV es…','Un descenso de terceras en el bajo',['Una secuencia de segundas','Una cadencia'],'Cada fundamental baja una tercera.'),
+ Q('El iii se resuelve normalmente en…','vi (o IV)',['vii°','ii'],'Sigue la lógica de las quintas descendentes.')],
+19:[
+ Q('La secuencia diatónica de quintas descendentes en Do mayor es…','I–IV–vii°–iii–vi–ii–V–I',['I–II–III–IV','I–V–I–V'],'Recorre los siete grados.'),
+ Q('El Canon de Pachelbel tiene como bajo…','Una secuencia de ocho notas repetida en ostinato',['Un bajo cromático','Una pedal'],'Re–La–Si–Fa♯–Sol–Re–Sol–La.'),
+ Q('Para que haya secuencia, el modelo debe repetirse…','A distinta altura, al menos dos veces',['A la misma altura','Una sola vez'],'Sin repetición no hay secuencia.'),
+ Q('En una secuencia 5–6, el bajo…','Alterna estado fundamental e inversión',['Se mantiene','Desciende cromáticamente siempre'],'Las voces superiores suben o bajan por grado.'),
+ Q('En la cadena por quintas, la séptima del acorde…','Baja a la tercera del siguiente',['Sube a la fundamental','Se mantiene'],'Es el principio de enlace.'),
+ Q('Una secuencia debe terminar con…','Una cadencia',['Un silencio','Una pedal'],'Se dirige a una meta tonal.')],
+20:[
+ Q('Una nota de paso une dos notas reales…','Por grado conjunto, en la misma dirección',['Con un salto','Repitiendo la nota'],'Es su definición.'),
+ Q('La bordadura…','Sale de una nota real por grado y vuelve a ella',['Une dos notas distintas','Anticipa el acorde siguiente'],'Puede ser superior o inferior.'),
+ Q('La apoyatura se distingue de la nota de paso porque…','Cae en tiempo fuerte y resuelve por grado',['Es cromática','Es breve siempre'],'La apoyatura es disonancia en tiempo fuerte.'),
+ Q('La escapada…','Entra por grado y sale por salto, en dirección contraria',['Entra por salto','Repite la nota'],'Es una nota ajena de movimiento libre.'),
+ Q('La anticipación pertenece al acorde…','Siguiente',['Anterior','De tónica siempre'],'Es una nota del acorde que aún no ha sonado.'),
+ Q('Sobre un acorde de Do mayor, la nota La es…','Ajena',['Real','Quinta'],'No pertenece a Do–Mi–Sol.')],
+21:[
+ Q('Un trino barroco o clásico sobre Re comienza…','En el tiempo, por la nota auxiliar superior (Mi)',['Antes del tiempo por Re','Por Do'],'La norma histórica es empezar por la superior.'),
+ Q('Una apoyatura ante una nota con puntillo ocupa…','Dos tercios de su valor',['La mitad','Un tercio'],'La nota con puntillo se divide en 2 + 1.'),
+ Q('El ornamento respecto a la armonía…','Conserva la función de la nota ornamentada',['La sustituye','Crea un acorde nuevo'],'Solo embellece.'),
+ Q('El mordente inferior sobre Do es…','Do–Si–Do',['Do–Re–Do','Do–Mi–Do'],'Principal–auxiliar inferior–principal.'),
+ Q('En el Romanticismo el trino suele comenzar…','Por la nota principal',['Por la superior siempre','Por la inferior'],'Convención del siglo XIX.'),
+ Q('La acciaccatura difiere de la apoyatura en que…','Es brevísima y no resta valor perceptible',['Dura la mitad','Siempre es cromática'],'Se «aplasta» contra la principal.')],
+22:[
+ Q('En una suspensión 4–3 sobre el bajo Sol, la nota suspendida es…','Do, que baja a Si',['Re','Si'],'Do forma cuarta con el bajo y resuelve en la tercera.'),
+ Q('La resolución de una suspensión se produce…','Por grado descendente, en parte más débil',['Con salto','En tiempo fuerte'],'Es la regla clásica.'),
+ Q('El retardo se distingue de la suspensión en que…','Resuelve hacia arriba',['Resuelve hacia abajo','No tiene preparación'],'Es una suspensión ascendente.'),
+ Q('La nota pedal comienza y termina como…','Nota consonante',['Disonancia','Cromatismo'],'Las disonancias se producen en el interior.'),
+ Q('Una suspensión sin preparación se interpreta como…','Apoyatura',['Anticipación','Pedal'],'No hay nota previa en el acorde anterior.'),
+ Q('En una suspensión 9–8 sobre el bajo Do, la nota que se resuelve es…','Re, que baja a Do',['Mi','Si'],'La 9.ª desciende a la octava.')],
+23:[
+ Q('En do menor, el vii°7 contiene…','Si–Re–Fa–La♭',['Si–Re–Fa–La','Si♭–Re–Fa–La♭'],'Tres terceras menores desde la sensible.'),
+ Q('G♯–B–D–F es el vii°7 de…','La menor',['Sol menor','Mi menor'],'Sol♯ es la sensible de La menor.'),
+ Q('La séptima La♭ del vii°7 de do menor resuelve a…','Sol',['La','Si'],'Baja por grado.'),
+ Q('El vii°7 puede interpretarse como…','V9♭ sin fundamental',['IV7 sin fundamental','I7'],'Sol–Si–Re–Fa–La♭ sin Sol.'),
+ Q('El vii°7 divide la octava en…','Cuatro partes iguales',['Tres partes iguales','Dos partes'],'Cuatro terceras menores.'),
+ Q('El mismo vii°7, por reescritura enarmónica, puede resolver en…','Ocho tonalidades (cuatro mayores y cuatro menores)',['Una sola tonalidad','Doce tonalidades'],'Cada una de sus cuatro notas puede ser la sensible de una tónica mayor o menor.')],
+24:[
+ Q('El ø7 sobre Si es…','Si–Re–Fa–La',['Si–Re–Fa–La♭','Si–Re♯–Fa♯–La'],'Tríada disminuida con séptima menor.'),
+ Q('En do menor, el iiø7 es…','Re–Fa–La♭–Do',['Re–Fa♯–La–Do','Re–Fa–La–Do'],'Segundo grado de la menor natural.'),
+ Q('iiø7–V7: las notas comunes son…','Re y Fa',['Do y La♭','Sol y Si'],'Aparecen en ambos acordes.'),
+ Q('El iiø6/5 se emplea frecuentemente porque…','El bajo Fa asciende por grado a Sol',['Evita la séptima','Es tónica'],'Favorece una línea de bajo conjunta.'),
+ Q('El acorde de Tristán es enarmónico de…','Un acorde semidisminuido (Fø7)',['Un acorde de séptima disminuida','Una sexta italiana'],'F–B–D♯–G♯ ≡ F–A♭–C♭–E♭.'),
+ Q('Fm6 con el bajo en Re es…','El iiø7 de do menor',['El iv7','El i6'],'Fa–La♭–Do–Re = Re–Fa–La♭–Do.')],
+25:[
+ Q('El iv en Do mayor es un acorde…','Prestado del modo menor',['Diatónico','Alterado dominante'],'Fa–La♭–Do.'),
+ Q('El ♭VI de Do mayor es…','La♭–Do–Mi♭',['La–Do–Mi','Si♭–Re–Fa'],'Mayor sobre el 6.º grado rebajado.'),
+ Q('La línea cromática de IV–iv–I es…','La–La♭–Sol',['Fa–Mi–Re','Do–Si–Do'],'La voz del 3.er grado desciende por semitonos.'),
+ Q('La tercera de Picardía es…','Un acorde final mayor en una pieza menor',['Un final menor en pieza mayor','Una cadencia rota'],'La tercera Mi♮ sustituye a Mi♭.'),
+ Q('El ♭VII de Do mayor procede del modo…','Mixolidio (o menor natural)',['Lidio','Locrio'],'Si♭–Re–Fa.'),
+ Q('Cuando el préstamo ocupa una frase entera, se trata de…','Un cambio de modo',['Una modulación a la dominante','Una pedal'],'La frase se establece en el modo paralelo.')],
+26:[
+ Q('En la cadena por quintas descendentes, entre dos acordes consecutivos de la reducción…','Dos voces permanecen y dos bajan',['Se mueven cuatro voces','Una sola voz se mueve'],'Dos notas comunes.'),
+ Q('En la cadena por terceras descendentes…','Solo se mueve una voz',['Se mueven dos','No hay notas comunes'],'Comparten tres notas.'),
+ Q('Entre las voces guía de un acorde de dominante hay…','Un tritono',['Una quinta justa','Una octava'],'Tercera y séptima.'),
+ Q('El sustituto tritonal de G7 es…','D♭7',['F7','Am7'],'Comparte el tritono Fa–Si.'),
+ Q('La cadena E7–A7–D7–G7–C es…','Una secuencia cromática de dominantes',['Una cadena diatónica','Una pedal'],'Cada V7 apunta al siguiente.'),
+ Q('Entre IVmaj7 y viiø7 las fundamentales forman…','Un tritono',['Una quinta justa','Una segunda'],'Fa–Si.')],
+27:[
+ Q('Em en Do mayor (iii) es, en Sol mayor…','vi',['ii','IV'],'Mi menor es el sexto grado.'),
+ Q('El pivote Am entre Do y Sol se cifra…','vi = ii',['I = IV','V = I'],'La menor es vi en Do y ii en Sol.'),
+ Q('La alteración que anuncia la modulación a Sol mayor es…','Fa♯',['Si♭','Sol♯'],'Es su sensible.'),
+ Q('Una modulación se confirma con…','Una cadencia en la nueva tonalidad',['Un cambio de compás','Un acorde pivote solo'],'Es el criterio decisivo.'),
+ Q('Las tonalidades vecinas de Do mayor incluyen…','Sol, Fa, la, mi y re menor',['Re, La y Mi mayor','Do♯ y Re♭'],'Difieren en una alteración como máximo.'),
+ Q('Un pivote sin función de tónica en la tonalidad de origen se prefiere porque…','No suena a final',['Es más corto','Evita el bajo'],'Evita la sensación de llegada prematura.')],
+28:[
+ Q('La novena de Sol es…','La',['Si','Do'],'Segunda más octava.'),
+ Q('La primera nota que se omite en un acorde extendido es…','La quinta',['La tercera','La fundamental'],'No es esencial.'),
+ Q('En V9→I, la novena resuelve en…','La quinta del I (La→Sol)',['La tercera','La fundamental'],'Baja por grado conjunto.'),
+ Q('La oncena natural sobre un acorde mayor se evita porque…','Choca con la tercera (novena menor)',['Es aguda','Es perfecta'],'Fa choca con Mi.'),
+ Q('El I6/4 cadencial se interpreta, en esencia, como…','V con apoyaturas (6–4 sobre el bajo de dominante)',['ii9','IV9'],'Do–Mi–Sol son tensiones de V.'),
+ Q('G7♭9 se diferencia de G9 en…','La novena menor (La♭)',['La séptima','La tercera'],'La♭ frente a La.')],
+29:[
+ Q('El napolitano en do menor es…','Re♭–Fa–La♭ (generalmente en 1.ª inversión)',['Re–Fa–La♭','Mi♭–Sol–Si♭'],'Re♭ mayor.'),
+ Q('El Re♭ del N6, al resolver directamente a V, baja a…','Si (tercera disminuida)',['Mi','Re'],'Evita la segunda aumentada.'),
+ Q('La nota que se duplica en N6 es…','La tercera (Fa)',['La fundamental','La quinta'],'Es la nota del bajo.'),
+ Q('La función del napolitano es…','Predominante',['Dominante','Tónica'],'Prepara V.'),
+ Q('El origen modal del napolitano es el modo…','Frigio',['Lidio','Dórico'],'♭2.'),
+ Q('En N6–I6/4–V, la voz superior puede hacer…','Re♭–Do–Si, descendiendo por grado',['Re♭–Re–Do','Re♭–Si–Do'],'El Re♭ pasa al Do (quinta de I6/4) y después al Si, sensible de V, sin intervalo aumentado.')],
+30:[
+ Q('La sexta aumentada La♭–Fa♯ resuelve a…','Una octava (Sol–Sol)',['Una quinta','Una tercera'],'Movimiento contrario.'),
+ Q('La sexta italiana contiene…','♭6–1–♯4 (tónica duplicada)',['♭6–1–♭3–♯4','♭6–1–2–♯4'],'Solo tres notas distintas.'),
+ Q('La sexta alemana suena igual que…','Un acorde de séptima de dominante (A♭7)',['Una tríada menor','Un acorde de séptima disminuida'],'Fa♯ ≡ Sol♭.'),
+ Q('Ger+6/5 → V directo produce…','Quintas paralelas',['Octavas paralelas','Un cruce'],'La♭–Mi♭ → Sol–Re.'),
+ Q('El ♭6 se coloca…','En el bajo',['En la voz interior','En cualquier voz'],'Forma la sexta aumentada con la voz superior.'),
+ Q('La sexta francesa contiene…','♭6–1–2–♯4',['♭6–1–♭3–♯4','♭6–1–♯4'],'La♭–Do–Re–Fa♯.')]
+};
 })();
 
 (function(){'use strict';
@@ -3102,11 +3340,11 @@ ENT(2,'Escribe anticipación, retardo y pedal','<p>Escribe las notas melódicas 
  EXP(0,'G4 G4 G4 G4','Nota pedal de dominante: Sol repetido cuatro veces','La pedal repite la nota mientras la armonía cambia.')]);
 /* ---------- E4 ---------- */
 RQ(3,'Reglas de la suspensión',
- '<ol><li><b>Preparación:</b> la nota debe ser consonante en el acorde anterior y tener, como mínimo, la misma duración que la suspensión.</li><li><b>Posición métrica:</b> la suspensión cae en el tiempo <b>fuerte</b> (o más fuerte) y la resolución, en la parte débil siguiente.</li><li><b>Ligadura:</b> la nota se mantiene con ligadura sobre el cambio de acorde, sin repetir ataque.</li><li><b>Resolución:</b> por grado conjunto descendente, sobre un acorde cuya nota resolutiva sea consonante.</li><li><b>No duplicar:</b> mientras suena la suspensión, ninguna otra voz debe tocar la nota de resolución, ni siquiera el bajo.</li></ol>',
- [{q:'Mientras suena la nota suspendida, la nota de resolución…',opts:['Debe estar duplicada en el bajo','No debe sonar en otra voz','Debe tocarse en la octava'],ans:1,why:'Duplicarla produciría un roce (novena menor, segunda) sin sentido.'},
+ '<ol><li><b>Preparación:</b> la nota debe ser consonante en el acorde anterior y tener, como mínimo, la misma duración que la suspensión.</li><li><b>Posición métrica:</b> la suspensión cae en el tiempo <b>fuerte</b> (o más fuerte) y la resolución, en la parte débil siguiente.</li><li><b>Ligadura:</b> la nota se mantiene con ligadura sobre el cambio de acorde, sin repetir ataque.</li><li><b>Resolución:</b> por grado conjunto descendente, sobre un acorde cuya nota resolutiva sea consonante.</li><li><b>No duplicar:</b> mientras suena la suspensión, ninguna voz superior debe tocar la nota de resolución (se formaría un roce de segunda o novena menor). <b>Excepción:</b> en la 9–8 la resolución suena en el bajo (Re sobre Do → Do), y es la norma.</li></ol>',
+ [{q:'En una suspensión 4–3 sobre Sol, mientras suena la nota suspendida (Do), el Si de resolución…',opts:['No debe sonar en ninguna voz superior','Debe duplicarse en el bajo','Debe tocarse en la octava'],ans:0,why:'Sonar a la vez con Do produciría un roce de segunda. La excepción es la 9–8, cuya resolución está en el bajo.'},
   {q:'La suspensión cae sobre un tiempo…',opts:['Débil','Fuerte','Indiferente'],ans:1,why:'Ahí es donde la disonancia es más perceptible.'}]);
 RQ(3,'Reglas de la anticipación y de la pedal',
- '<ul><li><b>Anticipación:</b> en parte débil, breve, siempre consonante con el acorde siguiente, y normalmente se repite al llegar a este; resulta típica en cadencias.</li><li><b>Pedal:</b> debe comenzar y terminar como nota <b>consonante</b> (del acorde inicial y del final); en el interior, puede ser disonante.</li><li>Se usa casi siempre sobre <b>I o V</b>.</li><li>Los acordes sobre la pedal deben ser <b>correctos entre sí</b> (conducción de voces limpia).</li><li>Se recomienda un tiempo prolongado, que justifique la pedal (al menos varios compases, incluso entre cinco y quince en la música para clave).</li></ul>',
+ '<ul><li><b>Anticipación:</b> en parte débil, breve, siempre consonante con el acorde siguiente, y normalmente se repite al llegar a este; resulta típica en cadencias.</li><li><b>Pedal:</b> debe comenzar y terminar como nota <b>consonante</b> (del acorde inicial y del final); en el interior, puede ser disonante.</li><li>Se usa casi siempre sobre <b>I o V</b>.</li><li>Los acordes sobre la pedal deben ser <b>correctos entre sí</b> (conducción de voces limpia).</li><li>Se recomienda un tiempo prolongado, que justifique la pedal (varios compases; en la música barroca para órgano o clave puede extenderse durante frases enteras).</li></ul>',
  [{q:'Una nota pedal debe empezar y terminar siendo…',opts:['Disonante','Consonante','Cromática'],ans:1,why:'Su comienzo y fin son consonantes; el tramo central admite disonancias.'}]);
 RQ(3,'Excepciones y licencias',
  '<ul><li><b>Suspensión sin preparación (apoyatura):</b> se admite en estilo más libre; su resolución sigue por grado.</li><li><b>Resolución ornamentada:</b> entre suspensión y resolución puede intercalarse una bordadura o una nota de paso (resolución «adornada»).</li><li><b>Suspensión de la sensible:</b> evita resolverla hacia abajo si es la sensible; el retardo la lleva a la tónica.</li><li><b>Pedal en el bajo sobre 6/4 cadencial:</b> el I⁶₄ es en sí un acorde de apoyatura doble sobre V.</li><li><b>Doble pedal:</b> tónica y dominante a la vez (bordón).</li></ul>',
@@ -3238,7 +3476,7 @@ RQ(0,'Simetría y resolución',
   {q:'La octava queda dividida en…',opts:['Cuatro partes iguales','Tres partes iguales'],ans:0,why:'Cada tercera menor mide 3 semitonos.'}]);
 /* ---------- E2 ---------- */
 RQ(1,'Clasificación por función',
- table([['vii°7 diatónico (menor)','Construido sobre la sensible de la menor armónica','B–D–F–A♭ en do menor'],['vii°7 prestado (mayor)','Tomado del modo menor paralelo','B–D–F–A♭ en Do mayor'],['vii°7/V, vii°7/ii…','Dominantes secundarias que resuelven a otro grado','F♯–A–C–E♭ → G'],['Disminuido de paso','Une dos acordes por movimiento cromático del bajo','I – ♯i°7 – ii'],['Disminuido auxiliar (de nota común)','Adorna un acorde con una bordadura cromática','I – vi°7 – I']],['Tipo','Descripción','Ejemplo'])
+ table([['vii°7 diatónico (menor)','Construido sobre la sensible de la menor armónica','B–D–F–A♭ en do menor'],['vii°7 prestado (mayor)','Tomado del modo menor paralelo','B–D–F–A♭ en Do mayor'],['vii°7/V, vii°7/ii…','Dominantes secundarias que resuelven a otro grado','F♯–A–C–E♭ → G'],['Disminuido de paso','Une dos acordes por movimiento cromático del bajo','I – ♯i°7 – ii'],['Disminuido auxiliar (de nota común)','Adorna un acorde con una bordadura cromática','I – ♯iv°7 – I (Do: Fa♯–La–Do–Mi♭)']],['Tipo','Descripción','Ejemplo'])
  +'<p class="lbl">El mismo acorde suena igual en todas sus funciones: lo que cambia es la <b>ortografía</b> (cómo se escribe) y su <b>resolución</b>.</p>',
  [{q:'El vii°7 prestado en una tonalidad mayor procede del…',opts:['Modo menor paralelo','Relativo menor','Modo dórico'],ans:0,why:'La♭ no pertenece al modo mayor: se toma prestado.'}]);
 RQ(1,'Los tres acordes y sus tonalidades',
@@ -3317,7 +3555,7 @@ S(6,'Compón un vii°7',function(b,api){b.innerHTML='<p>Escribe en arpegio un ac
 last({hits:[[0,2,1],[1,4],[2,6],[3,8]]});
 /* ---------- E8 ---------- */
 RQ(7,'Usos como acorde de aproximación y modulación',
- '<ul><li><b>Aproximación cromática:</b> el vii°7/X prepara cualquier grado X mediante un movimiento por semitono (Fa♯ → Sol, Do♯ → Re…).</li><li><b>Modulación:</b> al ser simétrico, se reescribe enarmónicamente para dirigirse a cuatro tonalidades (tema de modulación enarmónica).</li><li><b>Paso y bordadura:</b> el acorde disminuido de paso (I – ♯i°7 – ii) y el de nota común (I – vi°7 – I) adornan sin cambiar la armonía.</li><li><b>Dramatismo:</b> en el Barroco tardío, el Clasicismo y el Romanticismo se emplea para el énfasis expresivo: sorpresa y tensión antes de una cadencia.</li></ul>',
+ '<ul><li><b>Aproximación cromática:</b> el vii°7/X prepara cualquier grado X mediante un movimiento por semitono (Fa♯ → Sol, Do♯ → Re…).</li><li><b>Modulación:</b> al ser simétrico, se reescribe enarmónicamente para dirigirse a cuatro tonalidades (tema de modulación enarmónica).</li><li><b>Paso y bordadura:</b> el acorde disminuido de paso (I – ♯i°7 – ii) y el de nota común (I – ♯iv°7 – I) adornan sin cambiar la armonía.</li><li><b>Dramatismo:</b> en el Barroco tardío, el Clasicismo y el Romanticismo se emplea para el énfasis expresivo: sorpresa y tensión antes de una cadencia.</li></ul>',
  [{q:'Gracias a la enarmonía, el mismo vii°7 puede conducir a…',opts:['Cuatro tonalidades','Una sola','Siete tonalidades'],ans:0,why:'Cada nota puede ser la sensible de una tonalidad.'}]);
 RQ(7,'Al piano: escuchar la sensible',
  '<ul><li>Toca el acorde en arpegio y en bloque, y <b>canta la sensible</b> subiendo a la tónica.</li><li>Practica la resolución en las doce tonalidades menores empezando por la sensible.</li><li><b>Dinámica:</b> da peso al acorde disminuido y relaja la resolución.</li><li><b>Pedal:</b> cámbialo con el acorde; no mezcles la séptima disminuida con su resolución.</li></ul>',
@@ -3424,7 +3662,7 @@ NE(2,'Resuelve cada voz','<p>Escribe la nota de resolución de cada voz del ø7.
  {g:'A4',w:'G4',txt:'viiø7 → I: la séptima <b>La</b> baja a…',why:'Sol, la quinta del I.'}]);
 /* ---------- E4 ---------- */
 RQ(3,'Conducción de voces',
- '<ol><li>La <b>séptima</b> baja por grado conjunto, preparada o no (como disonancia libre por ser acorde de paso).</li><li>La <b>quinta disminuida</b> tiende a bajar; la <b>fundamental</b> (sensible, en el viiø7) sube.</li><li>Se admite la <b>nota común</b> con el acorde de resolución, que permanece.</li><li>Se evitan quintas paralelas: de 5.ª disminuida a justa es posible; de justa a disminuida suena mal.</li><li>Duplicación: nunca la sensible ni la séptima.</li></ol>',
+ '<ol><li>La <b>séptima</b> baja por grado conjunto. Suele estar preparada (nota común con el acorde anterior, p. ej. iiø7 tras IV), pero en la práctica clásica el iiø7 y el viiø7 se tratan a menudo con libertad al ser acordes de paso.</li><li>La <b>quinta disminuida</b> tiende a bajar; la <b>fundamental</b> (sensible, en el viiø7) sube.</li><li>Se admite la <b>nota común</b> con el acorde de resolución, que permanece.</li><li>Se evitan quintas paralelas: de 5.ª disminuida a justa es posible; de justa a disminuida suena mal.</li><li>Duplicación: nunca la sensible ni la séptima.</li></ol>',
  [{q:'La séptima del ø7 debe…',opts:['Bajar por grado conjunto','Subir','Duplicarse'],ans:0,why:'Es la regla de toda séptima.'},
   {q:'En el viiø7 la fundamental, que es la sensible, debe…',opts:['Subir a la tónica','Bajar','Quedarse como nota común'],ans:0,why:'Es su tendencia natural.'}]);
 RQ(3,'Resoluciones habituales',
@@ -4076,7 +4314,7 @@ ENT(6,'Escribe las resoluciones','<p>Escribe la nota de resolución de cada tens
  EXP(0,'A5 G5','Novena: La resuelve a Sol','9.ª → 5.ª del I.'),
  EXP(0,'F5 E5','Séptima: Fa resuelve a Mi','7.ª → 3.ª del I.'),
  EXP(0,'C5 B4','Oncena (suspensión): Do resuelve a Si','11.ª → 3.ª del V.')]);
-RQ(6,'Identifica el acorde extendido',
+RQ(6,'Reconoce el acorde extendido',
  '<p>Decide qué es cada acorde.</p>',
  [{pre:cstf('G3,B3,D4,F4,A4',{gap:60,w:120}),q:'Sol–Si–Re–Fa–La es…',opts:['G9','G11','G13'],ans:0,why:'La es la novena.'},
   {pre:cstf('G3,B3,D4,F4,A4,C5',{gap:60,w:120}),q:'Sol–Si–Re–Fa–La–Do es…',opts:['G9','G11','G7♭9'],ans:1,why:'Do es la oncena.'},
@@ -4425,9 +4663,12 @@ window.AH_LESSON.TOPICS[30]=STEPS;
 
 (function(){
 'use strict';
-var A=window.AH,L=window.AH_LESSON,el=A.el,KEY='compas_armonia_v2',STEPS=[],T={},TID=1;
+var A=window.AH,L=window.AH_LESSON,el=A.el,KEY='compas_armonia_v3',STEPS=[],T={},TID=1;
 var app=document.getElementById('app');
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};}}
+function load(){try{var v=JSON.parse(localStorage.getItem(KEY));if(v)return v;
+ var o=JSON.parse(localStorage.getItem('compas_armonia_v2'))||{},n={};
+ Object.keys(o).forEach(function(k){var d=o[k]&&o[k].done||{},c=Object.keys(d).length,m={};if(c>=24)for(var i=0;i<20;i++)m[i]=1;else for(var j=0;j<Math.min(c,19);j++)m[j]=1;n[k]={done:m,sc:{}};});
+ return n;}catch(e){return {};}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
 var st=load();
 var DROP={
@@ -4440,6 +4681,9 @@ var DROP={
 8:['Método: tríada más séptima'],
 10:['Oído: V–I o V–vi','Aplicación: cerrar una melodía']};
 Object.keys(DROP).forEach(function(t){L.TOPICS[t]=L.TOPICS[t].filter(function(s){return DROP[t].indexOf(s.ti)<0;});});
+var DROP2={"1": ["Escucha el tirón", "Tonalidades mayores y menores", "Los acordes de la tonalidad", "Para Elisa (la menor)"], "2": ["De la escala a la tonalidad", "Oído: escalas simétricas", "Escribe la escala cromática", "Escalas simétricas"], "3": ["Origen de los nombres", "Los siete modos desde Do", "Escribe modos con alteraciones", "Misma tónica, distinto color"], "4": ["Explora los intervalos", "Construye acordes", "Las reglas cambian con la época", "Escribe intervalos sobre una nota"], "5": ["Clasifica por calidad", "Consonantes y disonantes en la tonalidad", "Intervalos en el teclado", "Oído: melódicos"], "6": ["Clasifica los compases", "Cómo leer la cifra del compás", "Oído: ¿hay síncopa?", "Análisis: marcha y vals"], "7": ["Cifrado de las inversiones", "Oído: inversión", "Análisis: una progresión famosa", "Compón una primera inversión"], "8": ["Clasifica por las notas", "Escribe la séptima", "Oído: semidisminuido o disminuido", "Cifra el acorde"], "9": ["Clasifica por el cifrado", "Cifra las inversiones", "Cifrado tonal", "Oído: 6/5 o 4/3"], "10": ["Clasifica las cadencias", "Escribe V7 en arpegio", "Cifra la progresión", "Resolución regular e irregular"], "11": ["Aplicación: interpretar la tensión", "Cifra el enlace", "Inversiones del V7", "Escribe V7 en arpegio"], "12": ["Clasifica los elementos", "Aplicación: respirar al tocar", "Oído: dos cadencias", "Escribe motivos conocidos"], "13": ["Signos y nombres", "Lee las articulaciones", "Aplicación: tocar legato en el piano", "Oído: ¿dónde está el acento?"], "14": ["Clasifica los 6/4", "Cifra la cadencia", "Aplicación: acompañar con el 6/4", "Oído: con y sin 6/4"], "15": ["Función de cada acorde", "Cifra la progresión", "Aplicación: armonizar con vi y IV6", "Oído: ¿cuál es I–vi–IV–V?"], "16": ["Clasifica los acordes de séptima", "Cifra la cadena", "Aplicación: acompañamiento con II–V–I", "Oído: dos cadencias"], "17": ["Une la dominante con su destino", "Cifra la progresión", "Aplicación: enriquecer una progresión", "Oído: la sensible secundaria"], "18": ["Función de cada acorde", "Cifra los acordes", "Aplicación: armonizar la escala", "Oído: iii–vi"], "19": ["¿Sube o baja?", "Identifica el patrón", "Aplicación: practicar secuencias en el piano", "Oído: reconoce la repetición"], "20": ["Clasifica la nota ajena", "Identifica la nota ajena", "Aplicación: elegir el acorde que armoniza", "Oído: con y sin bordadura"], "21": ["Asocia cada ornamento con su definición", "Realiza mordentes y grupettos", "Oído: apoyatura larga o acciaccatura", "Ornamentar con criterio al piano"], "22": ["Clasifica cada fenómeno", "Compón una suspensión", "Oído: pedal de dominante", "Al piano: escuchar y ejecutar"], "23": ["Asigna cada acorde a su tonalidad", "Compón un vii°7", "Oído: ¿resuelve a mayor o a menor?", "Al piano: escuchar la sensible"], "24": ["Clasifica la cuatriada", "Compón un semidisminuido", "Oído: cadencia en menor o en mayor", "Al piano: practicar la cadencia"], "25": ["Cifra cada acorde prestado", "Compón un ♭VI", "Oído: acorde prestado o diatónico", "Armonizar una melodía con mixtura"], "26": ["Identifica el patrón", "Oído: cadena de dominantes", "Al piano: practicar las cadenas", "Escribe la voz de la séptima"], "27": ["Cifra el pivote Do → Sol", "Ejemplo: Do mayor → la menor", "Al piano: practicar y analizar", "Escribe el V7 de la nueva tonalidad"], "28": ["Identifica el acorde extendido", "Ejemplo: V13 – I", "Al piano: voicings prácticos", "Compón un acorde de novena"], "29": ["Distingue las tríadas sobre el bajo Fa", "Compón el napolitano", "Oído: cadencia con y sin napolitano", "Al piano: practicar la cadencia"], "30": ["Clasifica cada sexta", "Compón la sexta alemana", "Ejemplo: Fr+4/3 – V", "Al piano y en el repertorio"]};
+Object.keys(DROP2).forEach(function(t){L.TOPICS[t]=L.TOPICS[t].filter(function(s){return DROP2[t].indexOf(s.ti)<0;});});
+Object.keys(window.AH_FINALS||{}).forEach(function(t){var S=L.TOPICS[t];if(!S)return;S.forEach(function(s){if(s.ti==='Evaluación final del tema'){var q=window.AH_FINALS[t];s.r=function(box,api){window.AH_C.quiz(box,api,q.map(function(x){return {q:x.q,opts:x.opts.slice(),ans:0,why:x.why};}));};}});});
 var BLOQUES=[
  ['Bloque I · Fundamentos de teoría y armonía tonal',['Tonalidad','Escalas','Modos','Consonancia y disonancia','Intervalos en una tonalidad','Rítmica, métrica y organización','Acordes e inversiones','Acordes de séptima','Inversiones de acordes de séptima','Progresión V-I']],
  ['Bloque II · Armonía funcional y conducción de voces',['Séptima de dominante','La frase musical y la estructura','Articulaciones y conducción melódica','El acorde de cuarta y sexta cadencial','Usos de los grados VI y IV⁶','Subdominante y dominante con séptima','El V como área tonal','Usos de los grados III y VII','Secuencias diatónicas','Arpegios y notas de paso']],
